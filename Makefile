@@ -1,5 +1,5 @@
 TARGET = ge_mh_patch
-OBJS = main.o gu.o exports.o
+OBJS = main.o exports.o
 
 INCDIR =
 CFLAGS = -O2 -G0 -Wall -fno-pic
@@ -13,7 +13,7 @@ USE_KERNEL_LIBC=1
 USE_KERNEL_LIBS=1
 
 LIBDIR =
-LDFLAGS = -mno-crt0 -nostartfiles
+LDFLAGS = -nostartfiles
 LIBS = -lpspdisplay_driver -lpspgu
 
 PSPSDK=$(shell psp-config --pspsdk-path)

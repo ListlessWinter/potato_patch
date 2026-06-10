@@ -805,27 +805,8 @@ int sceGeListSyncPatched(int qid, int syncType) {
 
 void copyFrameBuffer()
 {
-  if (!fb_dirty)
-    return;
-
-  // ❗ 不建议提前清（改为尾部清）
-  sceGuStart(GU_DIRECT, (void *)(RENDER_LIST | 0xA0000000));
-
-  sceGuCopyImage(
-    PIXELFORMAT,
-    dirty_x, dirty_y,
-    dirty_w, dirty_h,
-    PITCH,
-    (void *)VRAM_DRAW_BUFFER_OFFSET,
-    dirty_x, dirty_y,
-    PITCH,
-    (void *)DISPLAY_BUFFER
-  );
-
-  sceGuFinish();
-
-  // ✔ 放最后更安全
   fb_dirty = 0;
+  return;
 }
 
 
