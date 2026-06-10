@@ -230,10 +230,8 @@ static void *last_fb = NULL;//FrameBuf
 
 
 static int fb_pending = 0;
-static int fb_last_vsync = 0;
 static int fb_copy_lock = 0;//节拍器
 
-static int skip = 0;//移动速度加速，降低调用api频率
 
 
 static int dirty_x = 0;
@@ -445,7 +443,7 @@ u32 *handleControlFlowCommands(u32 *list) {
           state.finished = 1;
           return NULL;
 
-        默认:
+        default:
           break;
       }
       break;
@@ -769,52 +767,6 @@ void *sceGeEdramGetAddrPatched(void) {
 
 unsigned int sceGeEdramGetSizePatched(void) {
   return 4 * 1024 * 1024;
-}
-
-int sceGeListUpdateStallAddrPatched(int qid, void *stall)//关键变化 → 必执行，解决50%调用被随机丢弃的问题，原来函数太简单
-{
-  int k1 = pspSdkSetK1(0);
-
-  // 👉 用 qid 做索引（PSP GE list 数量不大）
-  static void *last_stall[128] = {0};
-
-  void *prev = last_stall[qid];
-
-  // =========================================================
-  // 🚀 1. 完全重复 → 直接跳过（最高收益）
-  // =========================================================
-  if (prev == stall) {
-    pspSdkSetK1(k1);
-    return 0; // 不调用底层
-  }
-
-  // =========================================================
-  // 🚀 2. 小幅变化 → 合并（核心优化）
-  // =========================================================
-  if (prev != NULL) {
-    u32 p = (u32)prev & 0x0FFFFFFF;
-    u32 s = (u32)stall & 0x0FFFFFFF;
-
-    // 👉 差距太小（例如 < 64 字节），认为是“抖动更新”
-    // if ((u32)(s - p) <128) {//修改
-      // 不更新，等更大的推进
-      pspSdkSetK1(k1);
-      return 0;
-    // }
-  }
-
-  // =========================================================
-  // 🚀 3. 记录新状态
-  // =========================================================
-  last_stall[qid] = stall;
-
-  // =========================================================
-  // 🚀 4. 调用原函数（必须！）
-  // =========================================================
-  int res = _sceGeListUpdateStallAddr(qid, stall);
-
-  pspSdkSetK1(k1);
-  return res;
 }
 
 
