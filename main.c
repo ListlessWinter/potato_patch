@@ -749,6 +749,8 @@ void patchGeList(u32 *list, u32 *stall) {
           return;
         break;
     }
+  }
+}
 
 void *(* _sceGeEdramGetAddr)(void);
 unsigned int *(* _sceGeEdramGetSize)(void);
