@@ -1,0 +1,14 @@
+name: Debug Build
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: pspdev/pspdev:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and Print Logs
+        run: |
+          make clean || true
+          make 2> error.log || cat error.log
