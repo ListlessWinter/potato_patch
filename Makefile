@@ -14,7 +14,7 @@ USE_KERNEL_LIBS=1
 
 LIBDIR =
 LDFLAGS = -nostartfiles
-LIBS = -lpspdisplay_driver -lpspgu
+LIBS = -lpspdisplay_driver -lpspsystemctrl_kernel
 
 PSPSDK=$(shell psp-config --pspsdk-path)
 include $(PSPSDK)/lib/build_prx.mak
