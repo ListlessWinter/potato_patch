@@ -1,0 +1,24 @@
+name: Build GePatch MH PRX
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: pspdev/pspdev:latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build PRX
+        run: |
+          make clean || true
+          make
+          ls -la ge_mh_patch.prx
+      
+      - name: Upload PRX
+        uses: actions/upload-artifact@v4
+        with:
+          name: ge_mh_patch
+          path: ge_mh_patch.prx
