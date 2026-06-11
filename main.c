@@ -223,18 +223,7 @@ static int framebuf_set = 0;
 
 static u32 last_list = 0;//µû░σó₧σèáτè╢µÇü
 
-static int fb_dirty = 1;//FrameBuf
 static void *last_fb = NULL;//FrameBuf
-
-
-
-
-
-static int dirty_x = 0;
-static int dirty_y = 0;
-static int dirty_w = WIDTH;
-static int dirty_h = HEIGHT;
-
 
 static inline int checkVertexCache(u32 addr, u32 type, u16 count) {
   u32 hash = (addr >> 4) ^ type ^ count;
@@ -662,30 +651,17 @@ void patchGeList(u32 *list, u32 *stall) {
           if (pitch == 512 || pitch == 480) {
       
             // ≡ƒæë UI / σ░Åbuffer
-            fb_dirty = 1;
-      
-            dirty_x = 0;
-            dirty_y = 0;
-            dirty_w = WIDTH;
-            dirty_h = HEIGHT / 2;
       
           }
           else if (pitch == 960) {
       
-            // ≡ƒæë Σ╕╗σ£║µÖ» framebuffer∩╝êµ░╕Φ┐£µáçΦ«░ dirty∩╝ë
-            fb_dirty = 1;
-      
-            dirty_x = 0;
-            dirty_y = 0;
-            dirty_w = WIDTH;
-            dirty_h = HEIGHT;
+            // ≡ƒæë σñº buffer∩╝êµ¡úσ╕╕ framebuffer∩╝ëΓÇöΓÇöµö»µîü dirty
       
           }
           else {
       
-            // ≡ƒæë Θ¥₧µáçσçå buffer∩╝Üσ┐╜τòÑ
+            // ≡ƒæë σà╢Σ╗û bufferΓÇöΓÇöΣ╕ì dirty
             state.ignore_framebuf = 1;
-            fb_dirty = 0;
           }
       
           // =========================================================
@@ -905,8 +881,6 @@ int sceDisplaySetFrameBufPatched(void *topaddr, int bufferwidth, int pixelformat
 {
   if (topaddr != last_fb) {
     last_fb = topaddr;
-    fb_dirty = 1;
-    fb_pending = 1;
   }
 
   return _sceDisplaySetFrameBuf(
