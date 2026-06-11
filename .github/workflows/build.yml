@@ -23,6 +23,8 @@ jobs:
           git add dump.txt
           git commit -m 'upload PRX dump' || true
           git push || true
+      
+      - name: Upload PRX
         uses: actions/upload-artifact@v4
         with:
           name: ge_mh_patch
