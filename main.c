@@ -756,12 +756,13 @@ void patchGeList(u32 *list, u32 *stall) {
         list = handleControlFlowCommands(list);
         if (!list)
           return;
-        break;
     }
+  }
+}
 
 void *(* _sceGeEdramGetAddr)(void);
 unsigned int *(* _sceGeEdramGetSize)(void);
-int (* _sceGeGetList)(int qid, void *list, int *flag);
+// int (* _sceGeGetList)(int qid, void *list, int *flag);
 int (* _sceGeListUpdateStallAddr)(int qid, void *stall);
 int (* _sceGeListEnQueue)(const void *list, void *stall, int cbid, PspGeListArgs *arg);
 int (* _sceGeListEnQueueHead)(const void *list, void *stall, int cbid, PspGeListArgs *arg);
@@ -929,7 +930,7 @@ int sceDisplaySetFrameBufPatched(void *topaddr, int bufferwidth, int pixelformat
 int module_start(SceSize args, void *argp) {
   _sceGeEdramGetAddr = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xE47E40E4);
   _sceGeEdramGetSize = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x1F6752AD);
-  _sceGeGetList = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x67B01D8E);
+  // _sceGeGetList = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x67B01D8E);
   _sceGeListUpdateStallAddr = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xE0D68148);
   _sceGeListEnQueue = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xAB49E76A);
   _sceGeListEnQueueHead = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x1C0D95A6);
