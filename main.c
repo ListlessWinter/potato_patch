@@ -523,6 +523,14 @@ void patchGeList(u32 *list, u32 *stall) {
 {
   u16 count = data & 0xffff;
 
+  if (state.ignore_framebuf || state.ignore_texture) {
+    *list = 0;
+    u8 vertex_size = 0, pos_off = 0, visit_off = 0;
+    getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
+    AdvanceVerts(count, vertex_size);
+    break;
+  }
+
   // =========================================================
   // 🚀 0. THROUGH 快速过滤（必须最前）
   // =========================================================
