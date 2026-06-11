@@ -930,16 +930,16 @@ int module_start(SceSize args, void *argp) {
   _sceGeListSync = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x03444EB4);
   _sceGeDrawSync = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xB287BD61);
 
-  sctrlHENPatchSyscall((u32)_sceGeEdramGetAddr, sceGeEdramGetAddrPatched);
-  sctrlHENPatchSyscall((u32)_sceGeEdramGetSize, sceGeEdramGetSizePatched);
-  sctrlHENPatchSyscall((u32)_sceGeListUpdateStallAddr, sceGeListUpdateStallAddrPatched);
-  sctrlHENPatchSyscall((u32)_sceGeListEnQueue, sceGeListEnQueuePatched);
-  sctrlHENPatchSyscall((u32)_sceGeListEnQueueHead, sceGeListEnQueueHeadPatched);
-  // sctrlHENPatchSyscall((u32)_sceGeListSync, sceGeListSyncPatched);
-  sctrlHENPatchSyscall((u32)_sceGeDrawSync, sceGeDrawSyncPatched);
+  sctrlHENPatchSyscall((u32)(void *)_sceGeEdramGetAddr, (void *)sceGeEdramGetAddrPatched);
+  sctrlHENPatchSyscall((u32)(void *)_sceGeEdramGetSize, (void *)sceGeEdramGetSizePatched);
+  sctrlHENPatchSyscall((u32)(void *)_sceGeListUpdateStallAddr, (void *)sceGeListUpdateStallAddrPatched);
+  sctrlHENPatchSyscall((u32)(void *)_sceGeListEnQueue, (void *)sceGeListEnQueuePatched);
+  sctrlHENPatchSyscall((u32)(void *)_sceGeListEnQueueHead, (void *)sceGeListEnQueueHeadPatched);
+  // sctrlHENPatchSyscall((u32)(void *)_sceGeListSync, (void *)sceGeListSyncPatched);
+  sctrlHENPatchSyscall((u32)(void *)_sceGeDrawSync, (void *)sceGeDrawSyncPatched);
 
   _sceDisplaySetFrameBuf = (void *)FindProc("sceDisplay_Service", "sceDisplay_driver", 0x289D82FE);
-  sctrlHENPatchSyscall((u32)_sceDisplaySetFrameBuf, sceDisplaySetFrameBufPatched);
+  sctrlHENPatchSyscall((u32)(void *)_sceDisplaySetFrameBuf, (void *)sceDisplaySetFrameBufPatched);
 
   // SceUID thid = sceKernelCreateThread("draw_thread", draw_thread, 0x11, 0x4000, 0, NULL);
   // if (thid >= 0)
