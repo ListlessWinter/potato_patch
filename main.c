@@ -228,11 +228,6 @@ static void *last_fb = NULL;//FrameBuf
 
 
 
-static int fb_pending = 0;
-static int fb_last_vsync = 0;
-static int fb_copy_lock = 0;//ΦèéµïìσÖ¿
-
-static int skip = 0;//τº╗σè¿ΘÇƒσ║ªσèáΘÇƒ∩╝îΘÖìΣ╜ÄΦ░âτö¿apiΘóæτÄç
 
 
 static int dirty_x = 0;
@@ -506,9 +501,8 @@ void patchGeList(u32 *list, u32 *stall) {
 
       case GE_CMD_PRIM:
         {
-          state.has_draws = 1;
 
-          if (state.ignore_framebuf || (state.ignore_texture && state.ge_cmd[GE_CMD_TEXTUREMAPENABLE])) {
+          if (state.ignore_framebuf || (state.ignore_texture && state.ge_cmds[GE_CMD_TEXTUREMAPENABLE])) {
             *list = 0;
             break;
           }
@@ -533,7 +527,7 @@ void patchGeList(u32 *list, u32 *stall) {
             int tc_size = tcsize[tc] / 2;
             int is_post_process = 0;
 
-            if (state.ge_cmd[GE_CMD_TEXTUREMAPENABLE] != 0) {
+            if (state.ge_cmds[GE_CMD_TEXTUREMAPENABLE] != 0) {
               u32 texaddr = ((state.texbufwidth[0] & 0x0f0000) << 8) | (state.texbufptr[0] & 0xffffff);
               if (texaddr == 0x0000000 || texaddr == 0x0088000) {
                 is_post_process = 1;
@@ -845,12 +839,7 @@ int sceGeListUpdateStallAddrPatched(int qid, void *stall)//σà│Θö«σÅÿσ
   // =========================================================
   // ≡ƒÜÇ 2. σ░Åσ╣àσÅÿσîû ΓåÆ σÉêσ╣╢∩╝êµá╕σ┐âΣ╝ÿσîû∩╝ë
   // =========================================================
-  if (prev != NULL) {
-    u32 p = (u32)prev & 0x0FFFFFFF;
-    u32 s = (u32)stall & 0x0FFFFFFF;
 
-
-  }
 
   // =========================================================
   // ≡ƒÜÇ 3. Φ«░σ╜òµû░τè╢µÇü
@@ -904,7 +893,6 @@ int sceGeDrawSyncPatched(int syncType)
   if (!framebuf_set) {
     if (syncType == PSP_GE_LIST_DONE ||
         syncType == PSP_GE_LIST_DRAWING_DONE) {
-      copyFrameBuffer();
       rendered_in_sync = 1;
     }
   }
