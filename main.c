@@ -523,14 +523,6 @@ void patchGeList(u32 *list, u32 *stall) {
 {
   u16 count = data & 0xffff;
 
-  if (state.ignore_framebuf || state.ignore_texture) {
-    *list = 0;
-    u8 vertex_size = 0, pos_off = 0, visit_off = 0;
-    getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
-    AdvanceVerts(count, vertex_size);
-    break;
-  }
-
   // =========================================================
   // 🚀 0. THROUGH 快速过滤（必须最前）
   // =========================================================
@@ -721,25 +713,23 @@ void patchGeList(u32 *list, u32 *stall) {
 
       case GE_CMD_VIEWPORTXSCALE:
         t.i = data << 8;
-        t.f *= 2.0f;
+        t.f = (t.f < 0) ? -(WIDTH / 2) : (WIDTH / 2);
         *list = (cmd << 24) | (t.i >> 8);
         break;
 
       case GE_CMD_VIEWPORTYSCALE:
         t.i = data << 8;
-        t.f *= 2.0f;
+        t.f = (t.f < 0) ? -(HEIGHT / 2) : (HEIGHT / 2);
         *list = (cmd << 24) | (t.i >> 8);
         break;
 
       case GE_CMD_VIEWPORTXCENTER:
-        t.i = data << 8;
-        t.f = 2048.0f + (t.f - 2048.0f) * 2.0f;
+        t.f = 2048;
         *list = (cmd << 24) | (t.i >> 8);
         break;
 
       case GE_CMD_VIEWPORTYCENTER:
-        t.i = data << 8;
-        t.f = 2048.0f + (t.f - 2048.0f) * 2.0f;
+        t.f = 2048;
         *list = (cmd << 24) | (t.i >> 8);
         break;
 
@@ -768,7 +758,7 @@ void patchGeList(u32 *list, u32 *stall) {
 void *(* _sceGeEdramGetAddr)(void);
 unsigned int *(* _sceGeEdramGetSize)(void);
 int (* _sceGeGetList)(int qid, void *list, int *flag);
-
+int (* _sceGeListUpdateStallAddr)(int qid, void *stall);
 int (* _sceGeListEnQueue)(const void *list, void *stall, int cbid, PspGeListArgs *arg);
 int (* _sceGeListEnQueueHead)(const void *list, void *stall, int cbid, PspGeListArgs *arg);
 int (* _sceGeListSync)(int qid, int syncType);
@@ -784,8 +774,51 @@ unsigned int sceGeEdramGetSizePatched(void) {
   return 4 * 1024 * 1024;
 }
 
+int sceGeListUpdateStallAddrPatched(int qid, void *stall)
+{
+  int k1 = pspSdkSetK1(0);
 
+  // 👉 用 qid 做索引（PSP GE list 数量不大）
+  static void *last_stall[128] = {0};
 
+  void *prev = last_stall[qid];
+
+  // =========================================================
+  // 🚀 1. 完全重复 → 直接跳过（最高收益）
+  // =========================================================
+  if (prev == stall) {
+    pspSdkSetK1(k1);
+    return 0; // 不调用底层
+  }
+
+  // =========================================================
+  // 🚀 2. 小幅变化 → 合并（核心优化）
+  // =========================================================
+  if (prev != NULL) {
+    u32 p = (u32)prev & 0x0FFFFFFF;
+    u32 s = (u32)stall & 0x0FFFFFFF;
+
+    // 👉 差距太小（例如 < 64 字节），认为是“抖动更新”
+    // if ((u32)(s - p) < 128) {
+      // 不更新，等更大的推进
+      pspSdkSetK1(k1);
+      return 0;
+    // }
+  }
+
+  // =========================================================
+  // 🚀 3. 记录新状态
+  // =========================================================
+  last_stall[qid] = stall;
+
+  // =========================================================
+  // 🚀 4. 调用原函数（必须！）
+  // =========================================================
+  int res = _sceGeListUpdateStallAddr(qid, stall);
+
+  pspSdkSetK1(k1);
+  return res;
+}
 
 int sceGeListEnQueuePatched(const void *list, void *stall, int cbid, PspGeListArgs *arg) {//改动3
   u32 list_addr = (u32)list & 0x0fffffff;
@@ -822,8 +855,27 @@ int sceGeListSyncPatched(int qid, int syncType) {
 
 void copyFrameBuffer()
 {
+  if (!fb_dirty)
+    return;
+
+  // ❗ 不建议提前清（改为尾部清）
+  sceGuStart(GU_DIRECT, (void *)(RENDER_LIST | 0xA0000000));
+
+  sceGuCopyImage(
+    PIXELFORMAT,
+    dirty_x, dirty_y,
+    dirty_w, dirty_h,
+    PITCH,
+    (void *)VRAM_DRAW_BUFFER_OFFSET,
+    dirty_x, dirty_y,
+    PITCH,
+    (void *)DISPLAY_BUFFER
+  );
+
+  sceGuFinish();
+
+  // ✔ 放最后更安全
   fb_dirty = 0;
-  return;
 }
 
 
@@ -872,7 +924,7 @@ int module_start(SceSize args, void *argp) {
   _sceGeEdramGetAddr = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xE47E40E4);
   _sceGeEdramGetSize = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x1F6752AD);
   _sceGeGetList = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x67B01D8E);
-
+  _sceGeListUpdateStallAddr = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xE0D68148);
   _sceGeListEnQueue = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xAB49E76A);
   _sceGeListEnQueueHead = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x1C0D95A6);
   _sceGeListSync = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x03444EB4);
@@ -880,7 +932,7 @@ int module_start(SceSize args, void *argp) {
 
   sctrlHENPatchSyscall((void *)_sceGeEdramGetAddr, sceGeEdramGetAddrPatched);
   sctrlHENPatchSyscall((void *)_sceGeEdramGetSize, sceGeEdramGetSizePatched);
-
+  sctrlHENPatchSyscall((void *)_sceGeListUpdateStallAddr, sceGeListUpdateStallAddrPatched);
   sctrlHENPatchSyscall((void *)_sceGeListEnQueue, sceGeListEnQueuePatched);
   sctrlHENPatchSyscall((void *)_sceGeListEnQueueHead, sceGeListEnQueueHeadPatched);
   // sctrlHENPatchSyscall((void *)_sceGeListSync, sceGeListSyncPatched);
