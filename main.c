@@ -225,37 +225,19 @@ static int framebuf_set = 0;
 static u32 last_list = 0;//µû░σó₧σèáτè╢µÇü
 
 static int fb_dirty = 1;//FrameBuf
-static void *last_fb = NULL;//FrameBuf
+static u32 last_list = 0;
 
-
+static int fb_dirty = 1;
+static void *last_fb = NULL;
 
 static int fb_pending = 0;
-static int fb_last_vsync = 0;
-static int fb_copy_lock = 0;//ΦèéµïìσÖ¿
-
-static int skip = 0;//τº╗σè¿ΘÇƒσ║ªσèáΘÇƒ∩╝îΘÖìΣ╜ÄΦ░âτö¿apiΘóæτÄç
-
 
 static int dirty_x = 0;
 static int dirty_y = 0;
 static int dirty_w = WIDTH;
 static int dirty_h = HEIGHT;
 
-static inline void tryFrameCopy()
-{
-  if (!fb_pending)
-    return;
 
-  if (fb_copy_lock)
-    return;
-
-  fb_copy_lock = 1;
-
-  fb_dirty = 0;
-  fb_pending = 0;
-
-  fb_copy_lock = 0;
-}
 
 static inline int checkVertexCache(u32 addr, u32 type, u16 count) {
   u32 hash = (addr >> 4) ^ type ^ count;
@@ -441,7 +423,7 @@ u32 *handleControlFlowCommands(u32 *list) {
           state.finished = 1;
           return NULL;
 
-        Θ╗ÿΦ«ñ:
+        default:
           break;
       }
       break;
@@ -754,10 +736,12 @@ void patchGeList(u32 *list, u32 *stall) {
           return;
         break;
     }
+  }
+}
 
 void *(* _sceGeEdramGetAddr)(void);
 unsigned int *(* _sceGeEdramGetSize)(void);
-int (* _sceGeGetList)(int qid, void *list, int *flag);
+
 int (* _sceGeListUpdateStallAddr)(int qid, void *stall);
 int (* _sceGeListEnQueue)(const void *list, void *stall, int cbid, PspGeListArgs *arg);
 int (* _sceGeListEnQueueHead)(const void *list, void *stall, int cbid, PspGeListArgs *arg);
@@ -848,10 +832,7 @@ int sceGeListEnQueueHeadPatched(const void *list, void *stall, int cbid, PspGeLi
   return _sceGeListEnQueueHead(list, stall, cbid, arg);
 }
 
-int sceGeListSyncPatched(int qid, int syncType) {
-  tryFrameCopy();
-  return _sceGeListSync(qid, syncType);
-}
+
 
 
 
@@ -899,7 +880,7 @@ int sceDisplaySetFrameBufPatched(void *topaddr, int bufferwidth, int pixelformat
 int module_start(SceSize args, void *argp) {
   _sceGeEdramGetAddr = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xE47E40E4);
   _sceGeEdramGetSize = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x1F6752AD);
-  _sceGeGetList = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x67B01D8E);
+
   _sceGeListUpdateStallAddr = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xE0D68148);
   _sceGeListEnQueue = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xAB49E76A);
   _sceGeListEnQueueHead = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x1C0D95A6);
