@@ -222,14 +222,9 @@ static GeState state;
 static int rendered_in_sync = 0;
 static int framebuf_set = 0;
 
-static u32 last_list = 0;//µû░σó₧σèáτè╢µÇü
-
-static int fb_dirty = 1;//FrameBuf
 static u32 last_list = 0;
-
 static int fb_dirty = 1;
 static void *last_fb = NULL;
-
 static int fb_pending = 0;
 
 static int dirty_x = 0;
