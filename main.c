@@ -27,20 +27,8 @@ PSP_MODULE_INFO("GePatch", 0x1007, 1, 0);
 #define VRAM_DRAW_BUFFER_OFFSET 0x04000000
 #define VRAM_DEPTH_BUFFER_OFFSET 0x04100000
 #define VRAM_1KB 0x041ff000
-#define VERTEX_CACHE_SIZE 512//改一下缓存大小
+#define VERTEX_CACHE_SIZE 512//µö╣Σ╕ÇΣ╕ïτ╝ôσ¡ÿσñºσ░Å
 #define log(...)
-
-
-
-extern void *(* _sceGeEdramGetAddr)(void);
-extern unsigned int *(* _sceGeEdramGetSize)(void);
-extern int (* _sceGeGetList)(int qid, void **list, void **stall);
-extern int (* _sceGeListUpdateStallAddr)(int qid, void *stall);
-extern int (* _sceGeListEnQueue)(const void *list, void *stall, int cbid, PspGeListArgs *arg);
-extern int (* _sceGeListEnQueueHead)(const void *list, void *stall, int cbid, PspGeListArgs *arg);
-extern int (* _sceGeListSync)(int qid, int syncType);
-extern int (* _sceGeDrawSync)(int syncType);
-extern int (* _sceDisplaySetFrameBuf)(void *topaddr, int bufferwidth, int pixelformat, int sync);
 
 // void logmsg(char *msg) {
 //   int k1 = pspSdkSetK1(0);
@@ -63,7 +51,7 @@ static const u8 wtsize[4] = { 0, 1, 2, 4 }, wtalign[4] = { 0, 1, 2, 4 };
 
 #define ALIGN(x, align) (((x) + ((align) - 1)) & ~((align) - 1))
 
-void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *tc_off, u8 *visit_off) {
+void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off) {
   int tc = (op & GE_VTYPE_TC_MASK) >> GE_VTYPE_TC_SHIFT;
   int col = (op & GE_VTYPE_COL_MASK) >> GE_VTYPE_COL_SHIFT;
   int nrm = (op & GE_VTYPE_NRM_MASK) >> GE_VTYPE_NRM_SHIFT;
@@ -75,11 +63,13 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *tc_off, u8 *visit_o
   u8 biggest = 0;
   u8 size = 0;
   u8 aligned_size = 0;
-  u8 tcoff = 0;
+  // u8 weightoff = 0, tcoff = 0, coloff = 0, nrmoff = 0;
   u8 posoff = 0;
   u8 visitoff = 0;
 
   if (weight) {
+    // size = ALIGN(size, wtalign[weight]);
+    // weightoff = size;
     size += wtsize[weight] * weightCount;
     if (wtalign[weight] > biggest)
       biggest = wtalign[weight];
@@ -90,7 +80,7 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *tc_off, u8 *visit_o
     if (!visitoff && aligned_size != size)
       visitoff = size;
     size = aligned_size;
-    tcoff = size;
+    // tcoff = size;
     size += tcsize[tc];
     if (tcalign[tc] > biggest)
       biggest = tcalign[tc];
@@ -101,6 +91,7 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *tc_off, u8 *visit_o
     if (!visitoff && aligned_size != size)
       visitoff = size;
     size = aligned_size;
+    // coloff = size;
     size += colsize[col];
     if (colalign[col] > biggest)
       biggest = colalign[col];
@@ -111,6 +102,7 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *tc_off, u8 *visit_o
     if (!visitoff && aligned_size != size)
       visitoff = size;
     size = aligned_size;
+    // nrmoff = size;
     size += nrmsize[nrm];
     if (nrmalign[nrm] > biggest)
       biggest = nrmalign[nrm];
@@ -135,7 +127,6 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *tc_off, u8 *visit_o
 
   *vertex_size = size;
   *pos_off = posoff;
-  *tc_off = tcoff;
   *visit_off = visitoff;
 }
 
@@ -239,7 +230,10 @@ static void *last_fb = NULL;//FrameBuf
 
 
 static int fb_pending = 0;
-static int fb_copy_lock = 0;
+static int fb_last_vsync = 0;
+static int fb_copy_lock = 0;//ΦèéµïìσÖ¿
+
+static int skip = 0;//τº╗σè¿ΘÇƒσ║ªσèáΘÇƒ∩╝îΘÖìΣ╜ÄΦ░âτö¿apiΘóæτÄç
 
 
 static int dirty_x = 0;
@@ -447,7 +441,7 @@ u32 *handleControlFlowCommands(u32 *list) {
           state.finished = 1;
           return NULL;
 
-        default:
+        Θ╗ÿΦ«ñ:
           break;
       }
       break;
@@ -465,7 +459,6 @@ void patchGeList(u32 *list, u32 *stall) {
     float f;
     unsigned int i;
   } t;
-
 
   for (; !stall || (stall && list != stall); list++) {
     u32 op = *list;
@@ -501,8 +494,8 @@ void patchGeList(u32 *list, u32 *stall) {
 
           u32 count = num_points_u * num_points_v;
 
-          u8 vertex_size = 0, pos_off = 0, tc_off = 0, visit_off = 0;
-          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &tc_off, &visit_off);
+          u8 vertex_size = 0, pos_off = 0, visit_off = 0;
+          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
 
           AdvanceVerts(count, vertex_size);
         }
@@ -518,8 +511,8 @@ void patchGeList(u32 *list, u32 *stall) {
         if ((state.vertex_type & GE_VTYPE_THROUGH_MASK) == GE_VTYPE_THROUGH) {
           u32 count = data;
 
-          u8 vertex_size = 0, pos_off = 0, tc_off = 0, visit_off = 0;
-          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &tc_off, &visit_off);
+          u8 vertex_size = 0, pos_off = 0, visit_off = 0;
+          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
 
           AdvanceVerts(count, vertex_size);
         }
@@ -542,8 +535,8 @@ void patchGeList(u32 *list, u32 *stall) {
   // =========================================================
   // ≡ƒÜÇ 1. Θí╢τé╣Σ┐íµü»Φºúµ₧É
   // =========================================================
-  u8 vertex_size = 0, pos_off = 0, tc_off = 0, visit_off = 0;
-  getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &tc_off, &visit_off);
+  u8 vertex_size = 0, pos_off = 0, visit_off = 0;
+  getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
 
   u16 lower = 0;
   u16 upper = count;
@@ -575,105 +568,24 @@ void patchGeList(u32 *list, u32 *stall) {
 
   // =========================================================
   // ≡ƒÜÇ 4. σ░Åµë╣µ¼íΣ╝ÿσîû∩╝êUI / µÄëσ╕ºσà│Θö«µ¥Ñµ║É∩╝ë
-  int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
-  int pos_size = possize[pos] / 3;
-  int tc = (state.vertex_type & GE_VTYPE_TC_MASK) >> GE_VTYPE_TC_SHIFT;
+  // =========================================================
+  if (count < 200) {
+    static u32 ui_frame_skip = 0;
 
-  u8 *vptr = (u8 *)base_addr;
-
-  if (pos_size == 2) {
-    for (int i = 0; i < vertCount; i++) {
-      short *vx = (short *)(vptr + pos_off);
-      short *vy = (short *)(vptr + pos_off + 2);
-
-      short x = *vx;
-      short y = *vy;
-
-      int x_is_special = (x == 480) | (x == 960);
-      int x_in_range   = (x > -1024) & (x < 1024);
-      int x_scaled     = x << 1;
-      x = x_is_special ? 960 : (x_in_range ? x_scaled : x);
-
-      int y_is_special = (y == 272) | (y == 544);
-      int y_in_range   = (y > -1024) & (y < 1024);
-      int y_scaled     = y << 1;
-      y = y_is_special ? 544 : (y_in_range ? y_scaled : y);
-
-      *vx = x;
-      *vy = y;
-      
-      if (x_in_range && state.ignore_texture) {
-        if (tc == 2) {
-          u16 *tu = (u16 *)(vptr + tc_off);
-          u16 *tv = (u16 *)(vptr + tc_off + 2);
-          *tu = *tu << 1;
-          *tv = *tv << 1;
-        } else if (tc == 3) {
-          float *tu = (float *)(vptr + tc_off);
-          float *tv = (float *)(vptr + tc_off + 4);
-          *tu = *tu * 2.0f;
-          *tv = *tv * 2.0f;
-        } else if (tc == 1) {
-          u8 *tu = (u8 *)(vptr + tc_off);
-          u8 *tv = (u8 *)(vptr + tc_off + 1);
-          *tu = *tu << 1;
-          *tv = *tv << 1;
-        }
-      }
-
-      vptr += vertex_size;
-    }
-  } else if (pos_size == 4) {
-    for (int i = 0; i < vertCount; i++) {
-      float *vx = (float *)(vptr + pos_off);
-      float *vy = (float *)(vptr + pos_off + 4);
-
-      float x = *vx;
-      float y = *vy;
-      
-      int x_in_range = (x > -1024.0f && x < 1024.0f);
-
-      if (x != 0.0f) {
-        if (x == 480.0f || x == 960.0f) x = 960.0f;
-        else if (x_in_range) x = x * 2.0f;
-      }
-
-      if (y != 0.0f) {
-        if (y == 272.0f || y == 544.0f) y = 544.0f;
-        else if (y > -1024.0f && y < 1024.0f) y = y * 2.0f;
-      }
-
-      *vx = x;
-      *vy = y;
-      
-      if (x_in_range && state.ignore_texture) {
-        if (tc == 2) {
-          u16 *tu = (u16 *)(vptr + tc_off);
-          u16 *tv = (u16 *)(vptr + tc_off + 2);
-          *tu = *tu << 1;
-          *tv = *tv << 1;
-        } else if (tc == 3) {
-          float *tu = (float *)(vptr + tc_off);
-          float *tv = (float *)(vptr + tc_off + 4);
-          *tu = *tu * 2.0f;
-          *tv = *tv * 2.0f;
-        } else if (tc == 1) {
-          u8 *tu = (u8 *)(vptr + tc_off);
-          u8 *tv = (u8 *)(vptr + tc_off + 1);
-          *tu = *tu << 1;
-          *tv = *tv << 1;
-        }
-      }
-
-      vptr += vertex_size;
+    // ΓÜá∩╕Å σÅ¬σ»╣ UI σüÜΦèéµ╡ü∩╝îΣ╕ìσ╜▒σôìµêÿµûùσè¿Σ╜£
+    if ((ui_frame_skip++ & 1) == 0) {
+      AdvanceVerts(count, vertex_size);
+      break;
     }
   }
 
-
-
+  // =========================================================
+  // ≡ƒÜÇ 5. µ¡úσ╕╕µÄ¿Φ┐¢∩╝êΣ╕ìσåìσüÜΘçìΦ«íτ«ù∩╝ë
+  // =========================================================
   AdvanceVerts(count, vertex_size);
   break;
 }
+
 
       case GE_CMD_FRAMEBUFPIXFORMAT:
         *list = (cmd << 24) | PIXELFORMAT;
@@ -842,12 +754,10 @@ void patchGeList(u32 *list, u32 *stall) {
           return;
         break;
     }
-  }
-}
 
 void *(* _sceGeEdramGetAddr)(void);
 unsigned int *(* _sceGeEdramGetSize)(void);
-int (* _sceGeGetList)(int qid, void **list, void **stall);
+int (* _sceGeGetList)(int qid, void *list, int *flag);
 int (* _sceGeListUpdateStallAddr)(int qid, void *stall);
 int (* _sceGeListEnQueue)(const void *list, void *stall, int cbid, PspGeListArgs *arg);
 int (* _sceGeListEnQueueHead)(const void *list, void *stall, int cbid, PspGeListArgs *arg);
@@ -881,6 +791,19 @@ int sceGeListUpdateStallAddrPatched(int qid, void *stall)//σà│Θö«σÅÿσ
     return 0; // Σ╕ìΦ░âτö¿σ║òσ▒é
   }
 
+  // =========================================================
+  // ≡ƒÜÇ 2. σ░Åσ╣àσÅÿσîû ΓåÆ σÉêσ╣╢∩╝êµá╕σ┐âΣ╝ÿσîû∩╝ë
+  // =========================================================
+  if (prev != NULL) {
+    u32 p = (u32)prev & 0x0FFFFFFF;
+    u32 s = (u32)stall & 0x0FFFFFFF;
+
+    // ≡ƒæë σ╖«Φ╖¥σñ¬σ░Å∩╝êΣ╛ïσªé < 64 σ¡ùΦèé∩╝ë∩╝îΦ«ñΣ╕║µÿ»ΓÇ£µèûσè¿µ¢┤µû░ΓÇ¥
+    if ((u32)(s - p) < 128) {
+      pspSdkSetK1(k1);
+      return 0;
+    }
+  }
 
   // =========================================================
   // ≡ƒÜÇ 3. Φ«░σ╜òµû░τè╢µÇü
@@ -983,16 +906,16 @@ int module_start(SceSize args, void *argp) {
   _sceGeListSync = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x03444EB4);
   _sceGeDrawSync = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xB287BD61);
 
-  sctrlHENPatchSyscall((u32)(void *)_sceGeEdramGetAddr, (void *)sceGeEdramGetAddrPatched);
-  sctrlHENPatchSyscall((u32)(void *)_sceGeEdramGetSize, (void *)sceGeEdramGetSizePatched);
-  sctrlHENPatchSyscall((u32)(void *)_sceGeListUpdateStallAddr, (void *)sceGeListUpdateStallAddrPatched);
-  sctrlHENPatchSyscall((u32)(void *)_sceGeListEnQueue, (void *)sceGeListEnQueuePatched);
-  sctrlHENPatchSyscall((u32)(void *)_sceGeListEnQueueHead, (void *)sceGeListEnQueueHeadPatched);
-  // sctrlHENPatchSyscall((u32)(void *)_sceGeListSync, (void *)sceGeListSyncPatched);
-  sctrlHENPatchSyscall((u32)(void *)_sceGeDrawSync, (void *)sceGeDrawSyncPatched);
+  sctrlHENPatchSyscall((u32)_sceGeEdramGetAddr, sceGeEdramGetAddrPatched);
+  sctrlHENPatchSyscall((u32)_sceGeEdramGetSize, sceGeEdramGetSizePatched);
+  sctrlHENPatchSyscall((u32)_sceGeListUpdateStallAddr, sceGeListUpdateStallAddrPatched);
+  sctrlHENPatchSyscall((u32)_sceGeListEnQueue, sceGeListEnQueuePatched);
+  sctrlHENPatchSyscall((u32)_sceGeListEnQueueHead, sceGeListEnQueueHeadPatched);
+  // sctrlHENPatchSyscall((u32)_sceGeListSync, sceGeListSyncPatched);
+  sctrlHENPatchSyscall((u32)_sceGeDrawSync, sceGeDrawSyncPatched);
 
   _sceDisplaySetFrameBuf = (void *)FindProc("sceDisplay_Service", "sceDisplay_driver", 0x289D82FE);
-  sctrlHENPatchSyscall((u32)(void *)_sceDisplaySetFrameBuf, (void *)sceDisplaySetFrameBufPatched);
+  sctrlHENPatchSyscall((u32)_sceDisplaySetFrameBuf, sceDisplaySetFrameBufPatched);
 
   // SceUID thid = sceKernelCreateThread("draw_thread", draw_thread, 0x11, 0x4000, 0, NULL);
   // if (thid >= 0)
@@ -1003,3 +926,4 @@ int module_start(SceSize args, void *argp) {
 
   return 0;
 }
+
