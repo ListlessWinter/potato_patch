@@ -1,21 +1,16 @@
 psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600   -c -o main.o main.c
-main.c: In function 'patchGeList':
-main.c:769:9: error: 't' undeclared (first use in this function); did you mean 'tm'?
-  769 |         t.i = data << 8;
-      |         ^
-      |         tm
-main.c:769:9: note: each undeclared identifier is reported only once for each function it appears in
-main.c: At top level:
-main.c:814:8: error: conflicting types for '_sceGeGetList'; have 'int (*)(int,  void *, int *)'
-  814 | int (* _sceGeGetList)(int qid, void *list, int *flag);
-      |        ^~~~~~~~~~~~~
-main.c:37:15: note: previous declaration of '_sceGeGetList' with type 'int (*)(int,  void **, void **)'
-   37 | extern int (* _sceGeGetList)(int qid, void **list, void **stall);
-      |               ^~~~~~~~~~~~~
-main.c:248:12: warning: 'skip' defined but not used [-Wunused-variable]
-  248 | static int skip = 0;//τº╗σè¿ΘÇƒσ║ªσèáΘÇƒ∩╝îΘÖìΣ╜ÄΦ░âτö¿apiΘóæτÄç
+main.c:245:12: warning: 'skip' defined but not used [-Wunused-variable]
+  245 | static int skip = 0;//τº╗σè¿ΘÇƒσ║ªσèáΘÇƒ∩╝îΘÖìΣ╜ÄΦ░âτö¿apiΘóæτÄç
       |            ^~~~
-main.c:245:12: warning: 'fb_last_vsync' defined but not used [-Wunused-variable]
-  245 | static int fb_last_vsync = 0;
+main.c:242:12: warning: 'fb_last_vsync' defined but not used [-Wunused-variable]
+  242 | static int fb_last_vsync = 0;
       |            ^~~~~~~~~~~~~
-make: *** [<builtin>: main.o] Error 1
+psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600   -c -o gu.o gu.c
+psp-build-exports -b exports.exp > exports.c
+psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600   -c -o exports.o exports.c
+psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600  -L. -L/usr/local/pspdev/psp/lib -L/usr/local/pspdev/psp/sdk/lib -Wl,-q,-T/usr/local/pspdev/psp/sdk/lib/linkfile.prx -nostartfiles -Wl,-zmax-page-size=128 -nostartfiles  main.o gu.o exports.o -nostdlib -lpspdisplay_driver -lpspsystemctrl_kernel -lpspdebug -lpspdisplay_driver -lpspctrl_driver -lpspmodinfo -lpspsdk -lpspkernel -o ge_mh_patch.elf
+/usr/local/pspdev/lib/gcc/psp/15.2.0/../../../../psp/bin/ld: main.o: in function `sceGeDrawSyncPatched':
+(.text+0x134): undefined reference to `copyFrameBuffer'
+collect2: error: ld returned 1 exit status
+make: *** [/usr/local/pspdev/psp/sdk/lib/build_prx.mak:53: ge_mh_patch.elf] Error 1
+rm exports.c
