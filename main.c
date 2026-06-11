@@ -602,7 +602,7 @@ void patchGeList(u32 *list, u32 *stall) {
       *vx = x;
       *vy = y;
       
-      if (x_in_range) {
+      if (x_in_range && state.ignore_texture) {
         if (tc == 2) {
           u16 *tu = (u16 *)(vptr + tc_off);
           u16 *tv = (u16 *)(vptr + tc_off + 2);
@@ -646,7 +646,7 @@ void patchGeList(u32 *list, u32 *stall) {
       *vx = x;
       *vy = y;
       
-      if (x_in_range) {
+      if (x_in_range && state.ignore_texture) {
         if (tc == 2) {
           u16 *tu = (u16 *)(vptr + tc_off);
           u16 *tv = (u16 *)(vptr + tc_off + 2);
@@ -881,13 +881,6 @@ int sceGeListUpdateStallAddrPatched(int qid, void *stall)//σà│Θö«σÅÿσ
     return 0; // Σ╕ìΦ░âτö¿σ║òσ▒é
   }
 
-  // =========================================================
-  // ≡ƒÜÇ 2. σ░Åσ╣àσÅÿσîû ΓåÆ σÉêσ╣╢∩╝êµá╕σ┐âΣ╝ÿσîû∩╝ë
-  // =========================================================
-  if (prev != NULL) {
-    pspSdkSetK1(k1);
-    return 0;
-  }
 
   // =========================================================
   // ≡ƒÜÇ 3. Φ«░σ╜òµû░τè╢µÇü
