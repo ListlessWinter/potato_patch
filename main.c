@@ -806,6 +806,8 @@ void patchGeList(u32 *list, u32 *stall) {
           return;
         break;
     }
+  }
+}
 
 void *(* _sceGeEdramGetAddr)(void);
 unsigned int *(* _sceGeEdramGetSize)(void);
@@ -847,15 +849,8 @@ int sceGeListUpdateStallAddrPatched(int qid, void *stall)//σà│Θö«σÅÿσ
   // ≡ƒÜÇ 2. σ░Åσ╣àσÅÿσîû ΓåÆ σÉêσ╣╢∩╝êµá╕σ┐âΣ╝ÿσîû∩╝ë
   // =========================================================
   if (prev != NULL) {
-    u32 p = (u32)prev & 0x0FFFFFFF;
-    u32 s = (u32)stall & 0x0FFFFFFF;
-
-    // ≡ƒæë σ╖«Φ╖¥σñ¬σ░Å∩╝êΣ╛ïσªé < 64 σ¡ùΦèé∩╝ë∩╝îΦ«ñΣ╕║µÿ»ΓÇ£µèûσè¿µ¢┤µû░ΓÇ¥
-    // if ((u32)(s - p) <128) {//Σ┐«µö╣
-      // Σ╕ìµ¢┤µû░∩╝îτ¡ëµ¢┤σñºτÜäµÄ¿Φ┐¢
-      pspSdkSetK1(k1);
-      return 0;
-    // }
+    pspSdkSetK1(k1);
+    return 0;
   }
 
   // =========================================================
