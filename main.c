@@ -473,7 +473,7 @@ void patchGeList(u32 *list, u32 *stall) {
           u32 count = num_points_u * num_points_v;
 
           u8 vertex_size = 0, pos_off = 0, visit_off = 0;
-          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
+          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off, NULL);
 
           AdvanceVerts(count, vertex_size);
         }
@@ -490,7 +490,7 @@ void patchGeList(u32 *list, u32 *stall) {
           u32 count = data;
 
           u8 vertex_size = 0, pos_off = 0, visit_off = 0;
-          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
+          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off, NULL);
 
           AdvanceVerts(count, vertex_size);
         }
@@ -793,16 +793,7 @@ int sceGeListUpdateStallAddrPatched(int qid, void *stall)//σà│Θö«σÅÿσ
     return 0; // Σ╕ìΦ░âτö¿σ║òσ▒é
   }
 
-  // =========================================================
-  // ≡ƒÜÇ 2. σ░Åσ╣àσÅÿσîû ΓåÆ σÉêσ╣╢∩╝êµá╕σ┐âΣ╝ÿσîû∩╝ë
-  // =========================================================
-  if (prev != NULL) {
-    u32 p = (u32)prev & 0x0FFFFFFF;
-    u32 s = (u32)stall & 0x0FFFFFFF;
 
-    // ≡ƒæë σ╖«Φ╖¥σñ¬σ░Å∩╝êΣ╛ïσªé < 64 σ¡ùΦèé∩╝ë∩╝îΦ«ñΣ╕║µÿ»ΓÇ£µèûσè¿µ¢┤µû░ΓÇ¥
-
-  }
 
   // =========================================================
   // ≡ƒÜÇ 3. Φ«░σ╜òµû░τè╢µÇü
