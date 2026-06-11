@@ -1,5 +1,5 @@
 TARGET = ge_mh_patch
-OBJS = main.o exports.o
+OBJS = main.o gu.o exports.o
 
 INCDIR =
 CFLAGS = -O2 -G0 -Wall -fno-pic
@@ -14,7 +14,7 @@ USE_KERNEL_LIBS=1
 
 LIBDIR =
 LDFLAGS = -nostartfiles
-LIBS = -lpspdisplay_driver -lpspsystemctrl_kernel -lpspgu
+LIBS = -lpspdisplay_driver -lpspsystemctrl_kernel
 
 PSPSDK=$(shell psp-config --pspsdk-path)
 include $(PSPSDK)/lib/build_prx.mak
