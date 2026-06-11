@@ -1,16 +1,38 @@
 psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600   -c -o main.o main.c
-main.c:245:12: warning: 'skip' defined but not used [-Wunused-variable]
-  245 | static int skip = 0;//τº╗σè¿ΘÇƒσ║ªσèáΘÇƒ∩╝îΘÖìΣ╜ÄΦ░âτö¿apiΘóæτÄç
+main.c: In function 'handleControlFlowCommands':
+main.c:444:10: error: stray '\342' in program
+  444 |         <U+0398><U+2557><U+00FF><U+03A6><U+00AB><U+00F1>:
+      |                 ^~~~~~~~
+main.c:444:9: error: unknown type name '\U00000398'
+  444 |         Θ╗ÿΦ«ñ:
+      |         ^
+main.c:444:13: error: stray '\302' in program
+  444 |         <U+0398><U+2557><U+00FF><U+03A6><U+00AB><U+00F1>:
+      |                                         ^~~~~~~~
+main.c:444:14: error: expected '=', ',', ';', 'asm' or '__attribute__' before '\U000000f1'
+  444 |         Θ╗ÿΦ«ñ:
+      |              ^
+main.c: In function 'patchGeList':
+main.c:928:1: error: expected declaration or statement at end of input
+  928 | }
+      | ^
+main.c:760:8: warning: variable '_sceGeGetList' set but not used [-Wunused-but-set-variable]
+  760 | int (* _sceGeGetList)(int qid, void *list, int *flag);
+      |        ^~~~~~~~~~~~~
+main.c:928:1: error: expected declaration or statement at end of input
+  928 | }
+      | ^
+main.c: At top level:
+main.c:899:5: warning: 'module_start' defined but not used [-Wunused-function]
+  899 | int module_start(SceSize args, void *argp) {
+      |     ^~~~~~~~~~~~
+main.c:851:5: warning: 'sceGeListSyncPatched' defined but not used [-Wunused-function]
+  851 | int sceGeListSyncPatched(int qid, int syncType) {
+      |     ^~~~~~~~~~~~~~~~~~~~
+main.c:236:12: warning: 'skip' defined but not used [-Wunused-variable]
+  236 | static int skip = 0;//τº╗σè¿ΘÇƒσ║ªσèáΘÇƒ∩╝îΘÖìΣ╜ÄΦ░âτö¿apiΘóæτÄç
       |            ^~~~
-main.c:242:12: warning: 'fb_last_vsync' defined but not used [-Wunused-variable]
-  242 | static int fb_last_vsync = 0;
+main.c:233:12: warning: 'fb_last_vsync' defined but not used [-Wunused-variable]
+  233 | static int fb_last_vsync = 0;
       |            ^~~~~~~~~~~~~
-psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600   -c -o gu.o gu.c
-psp-build-exports -b exports.exp > exports.c
-psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600   -c -o exports.o exports.c
-psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600  -L. -L/usr/local/pspdev/psp/lib -L/usr/local/pspdev/psp/sdk/lib -Wl,-q,-T/usr/local/pspdev/psp/sdk/lib/linkfile.prx -nostartfiles -Wl,-zmax-page-size=128 -nostartfiles  main.o gu.o exports.o -nostdlib -lpspdisplay_driver -lpspsystemctrl_kernel -lpspdebug -lpspdisplay_driver -lpspctrl_driver -lpspmodinfo -lpspsdk -lpspkernel -o ge_mh_patch.elf
-/usr/local/pspdev/lib/gcc/psp/15.2.0/../../../../psp/bin/ld: main.o: in function `sceGeDrawSyncPatched':
-(.text+0x134): undefined reference to `copyFrameBuffer'
-collect2: error: ld returned 1 exit status
-make: *** [/usr/local/pspdev/psp/sdk/lib/build_prx.mak:53: ge_mh_patch.elf] Error 1
-rm exports.c
+make: *** [<builtin>: main.o] Error 1
