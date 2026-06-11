@@ -1,14 +1,22 @@
 psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600   -c -o main.o main.c
-main.c:228:12: error: redefinition of 'last_list'
-  228 | static u32 last_list = 0;
-      |            ^~~~~~~~~
-main.c:225:12: note: previous definition of 'last_list' with type 'u32' {aka 'long unsigned int'}
-  225 | static u32 last_list = 0;//µû░σó₧σèáτè╢µÇü
-      |            ^~~~~~~~~
-main.c:230:12: error: redefinition of 'fb_dirty'
-  230 | static int fb_dirty = 1;
-      |            ^~~~~~~~
-main.c:227:12: note: previous definition of 'fb_dirty' with type 'int'
-  227 | static int fb_dirty = 1;//FrameBuf
-      |            ^~~~~~~~
+main.c: In function 'patchGeList':
+main.c:476:11: error: too few arguments to function 'getVertexInfo'; expected 5, have 4
+  476 |           getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
+      |           ^~~~~~~~~~~~~
+main.c:54:6: note: declared here
+   54 | void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off, u8 *tc_off) {
+      |      ^~~~~~~~~~~~~
+main.c:493:11: error: too few arguments to function 'getVertexInfo'; expected 5, have 4
+  493 |           getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
+      |           ^~~~~~~~~~~~~
+main.c:54:6: note: declared here
+   54 | void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off, u8 *tc_off) {
+      |      ^~~~~~~~~~~~~
+main.c: In function 'sceGeListUpdateStallAddrPatched':
+main.c:801:9: warning: unused variable 's' [-Wunused-variable]
+  801 |     u32 s = (u32)stall & 0x0FFFFFFF;
+      |         ^
+main.c:800:9: warning: unused variable 'p' [-Wunused-variable]
+  800 |     u32 p = (u32)prev & 0x0FFFFFFF;
+      |         ^
 make: *** [<builtin>: main.o] Error 1
