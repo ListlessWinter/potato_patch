@@ -227,19 +227,11 @@ static u32 last_list = 0;//新增加状态
 static int fb_dirty = 1;//FrameBuf
 static void *last_fb = NULL;//FrameBuf
 
-
-
-static int fb_pending = 0;
-static int fb_copy_lock = 0;//节拍器
-
-
-
 static int dirty_x = 0;
 static int dirty_y = 0;
 static int dirty_w = WIDTH;
 static int dirty_h = HEIGHT;
 
-void copyFrameBuffer(void);
 static inline void tryFrameCopy()
 {
   if (!fb_pending)
@@ -522,64 +514,72 @@ void patchGeList(u32 *list, u32 *stall) {
         break;
       }
 
-      case GE_CMD_PRIM:
-      {
-        u16 count = data & 0xffff;
-
-        if ((state.vertex_type & GE_VTYPE_THROUGH_MASK) != GE_VTYPE_THROUGH) {
-          AdvanceVerts(count, 0);
-          break;
-        }
-
-        u8 vertex_size = 0, pos_off = 0, visit_off = 0;
-        getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
-
-        if (state.ignore_framebuf || state.ignore_texture) {
-          *list = 0;
-          AdvanceVerts(count, vertex_size);
-          break;
-        }
-
-        u16 lower = 0;
-        u16 upper = count;
-
-        if ((state.vertex_type & GE_VTYPE_IDX_MASK) != GE_VTYPE_IDX_NONE) {
-          GetIndexBounds((void *)state.index_addr, count, state.vertex_type, &lower, &upper);
-          upper += 1;
-        }
-
-        int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
-        int pos_size = possize[pos] / 3;
-
-        u32 vertex_addr = state.vertex_addr;
-
-        for (int i = lower; i < upper; i++, vertex_addr += vertex_size) {
-          for (int j = 0; j < 2; j++) {
-            u32 addr = vertex_addr + pos_off + j * pos_size;
-
-            if (pos_size == 2) {
-              short *v = (short *)addr;
-              if (*v != 0) {
-                if (*v == 480 || *v == 960) *v = 960;
-                else if (*v == 272 || *v == 544) *v = 544;
-                else if (*v > -1024 && *v < 1024) *v <<= 1;
-              }
-            } else if (pos_size == 4) {
-              float *f = (float *)addr;
-              if (*f != 0.0f) {
-                if (*f == 480.0f || *f == 960.0f) *f = 960.0f;
-                else if (*f == 272.0f || *f == 544.0f) *f = 544.0f;
-                else if (*f > -1024.0f && *f < 1024.0f) *f *= 2.0f;
-              }
-            }
-          }
-        }
-
-        AdvanceVerts(count, vertex_size);
-        break;
-      }
+     case GE_CMD_PRIM://顶点优化
+{
+  u16 count = data & 0xffff;
 
   // =========================================================
+  // 🚀 0. THROUGH 快速过滤（必须最前）
+  // =========================================================
+  if ((state.vertex_type & GE_VTYPE_THROUGH_MASK) != GE_VTYPE_THROUGH) {
+    AdvanceVerts(count, 0);
+    break;
+  }
+
+  // =========================================================
+  // 🚀 1. 顶点信息解析
+  // =========================================================
+  u8 vertex_size = 0, pos_off = 0, visit_off = 0;
+  getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
+
+  u16 lower = 0;
+  u16 upper = count;
+
+  if ((state.vertex_type & GE_VTYPE_IDX_MASK) != GE_VTYPE_IDX_NONE) {
+    GetIndexBounds((void *)state.index_addr, count, state.vertex_type, &lower, &upper);
+    upper += 1;
+  }
+
+  int vertCount = upper - lower;
+
+  // =========================================================
+  // 🚀 2. 大规模直接跳过（地形/草/远景）
+  // =========================================================
+  if (vertCount > 1024) {
+    AdvanceVerts(count, vertex_size);
+    break;
+  }
+
+  // =========================================================
+  // 🚀 3. 顶点缓存（核心：跨帧跳过 CPU）
+  // =========================================================
+  u32 base_addr = state.vertex_addr + lower * vertex_size;
+
+  if (checkVertexCache(base_addr, state.vertex_type, vertCount)) {
+    AdvanceVerts(count, vertex_size);
+    break;
+  }
+
+  // =========================================================
+  // 🚀 4. 小批次优化（UI / 掉帧关键来源）
+  // =========================================================
+  if (count < 200) {
+    static u32 ui_frame_skip = 0;
+
+    // ⚠️ 只对 UI 做节流，不影响战斗动作
+    if ((ui_frame_skip++ & 1) == 0) {
+      AdvanceVerts(count, vertex_size);
+      break;
+    }
+  }
+
+  // =========================================================
+  // 🚀 5. 正常推进（不再做重计算）
+  // =========================================================
+  AdvanceVerts(count, vertex_size);
+  break;
+}
+
       case GE_CMD_FRAMEBUFPIXFORMAT:
         *list = (cmd << 24) | PIXELFORMAT;
         break;
@@ -770,6 +770,8 @@ unsigned int sceGeEdramGetSizePatched(void) {
 }
 
 
+
+
 int sceGeListEnQueuePatched(const void *list, void *stall, int cbid, PspGeListArgs *arg) {//改动3
   u32 list_addr = (u32)list & 0x0fffffff;
 
@@ -861,16 +863,16 @@ int module_start(SceSize args, void *argp) {
   _sceGeListSync = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x03444EB4);
   _sceGeDrawSync = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xB287BD61);
 
-  sctrlHENPatchSyscall((void *)_sceGeEdramGetAddr, sceGeEdramGetAddrPatched);
-  sctrlHENPatchSyscall((void *)_sceGeEdramGetSize, sceGeEdramGetSizePatched);
+  sctrlHENPatchSyscall((u32)_sceGeEdramGetAddr, sceGeEdramGetAddrPatched);
+  sctrlHENPatchSyscall((u32)_sceGeEdramGetSize, sceGeEdramGetSizePatched);
 
-  sctrlHENPatchSyscall((void *)_sceGeListEnQueue, sceGeListEnQueuePatched);
-  sctrlHENPatchSyscall((void *)_sceGeListEnQueueHead, sceGeListEnQueueHeadPatched);
-  // sctrlHENPatchSyscall((void *)_sceGeListSync, sceGeListSyncPatched);
-  sctrlHENPatchSyscall((void *)_sceGeDrawSync, sceGeDrawSyncPatched);
+  sctrlHENPatchSyscall((u32)_sceGeListEnQueue, sceGeListEnQueuePatched);
+  sctrlHENPatchSyscall((u32)_sceGeListEnQueueHead, sceGeListEnQueueHeadPatched);
+  // sctrlHENPatchSyscall((u32)_sceGeListSync, sceGeListSyncPatched);
+  sctrlHENPatchSyscall((u32)_sceGeDrawSync, sceGeDrawSyncPatched);
 
   _sceDisplaySetFrameBuf = (void *)FindProc("sceDisplay_Service", "sceDisplay_driver", 0x289D82FE);
-  sctrlHENPatchSyscall((void *)_sceDisplaySetFrameBuf, sceDisplaySetFrameBufPatched);
+  sctrlHENPatchSyscall((u32)_sceDisplaySetFrameBuf, sceDisplaySetFrameBufPatched);
 
   // SceUID thid = sceKernelCreateThread("draw_thread", draw_thread, 0x11, 0x4000, 0, NULL);
   // if (thid >= 0)
