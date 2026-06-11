@@ -583,55 +583,27 @@ void patchGeList(u32 *list, u32 *stall) {
 
   // =========================================================
   // ≡ƒÜÇ 4. σ░Åµë╣µ¼íΣ╝ÿσîû∩╝êUI / µÄëσ╕ºσà│Θö«µ¥Ñµ║É∩╝ë
-  // =========================================================
-  if (count < 200) {
-    static u32 ui_frame_skip = 0;
-
-    // ΓÜá∩╕Å σÅ¬σ»╣ UI σüÜΦèéµ╡ü∩╝îΣ╕ìσ╜▒σôìµêÿµûùσè¿Σ╜£
-    if ((ui_frame_skip++ & 1) == 0) {
-      AdvanceVerts(count, vertex_size);
-      break;
-    }
-  }
-
-  // =========================================================
-  // ≡ƒÜÇ 5. µ¡úσ╕╕µÄ¿Φ┐¢∩╝êΣ╕ìσåìσüÜΘçìΦ«íτ«ù∩╝ë
-  // =========================================================
-  AdvanceVerts(count, vertex_size);
-  break;
-}
-       
   int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
   int pos_size = possize[pos] / 3;
 
   u8 *vptr = (u8 *)base_addr;
 
-  // =========================================================
-  // ≡ƒÜÇ ≡ƒÜÇ ≡ƒÜÇ µá╕σ┐âΣ╝ÿσîûΦ╖»σ╛ä∩╝êσìòσ▒éσ╛¬τÄ» + branchless + Φ┐₧τ╗¡σåàσ¡ÿ∩╝ë
-  // =========================================================
-
   if (pos_size == 2) {
-    // ===== short Φ╖»σ╛ä∩╝êΣ╕╗σè¢Φ╖»σ╛ä∩╝ë=====
     for (int i = 0; i < vertCount; i++) {
-
       short *vx = (short *)(vptr + pos_off);
       short *vy = (short *)(vptr + pos_off + 2);
 
       short x = *vx;
       short y = *vy;
 
-      // ===== branchless x =====
       int x_is_special = (x == 480) | (x == 960);
       int x_in_range   = (x > -1024) & (x < 1024);
       int x_scaled     = x << 1;
-
       x = x_is_special ? 960 : (x_in_range ? x_scaled : x);
 
-      // ===== branchless y =====
       int y_is_special = (y == 272) | (y == 544);
       int y_in_range   = (y > -1024) & (y < 1024);
       int y_scaled     = y << 1;
-
       y = y_is_special ? 544 : (y_in_range ? y_scaled : y);
 
       *vx = x;
@@ -639,11 +611,8 @@ void patchGeList(u32 *list, u32 *stall) {
 
       vptr += vertex_size;
     }
-
   } else if (pos_size == 4) {
-    // ===== float Φ╖»σ╛ä∩╝êΣ┐¥σ«êΣ╝ÿσîûτëê∩╝ë=====
     for (int i = 0; i < vertCount; i++) {
-
       float *vx = (float *)(vptr + pos_off);
       float *vy = (float *)(vptr + pos_off + 4);
 
@@ -667,27 +636,6 @@ void patchGeList(u32 *list, u32 *stall) {
     }
   }
 
-  // ≡ƒÜÇ 5. µÄ¿Φ┐¢Θí╢τé╣µîçΘÆê
-  AdvanceVerts(count, vertex_size);
-
-  break;
-}
-  
-  int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
-  int pos_size = possize[pos] / 3;
-
-  u32 vertex_addr = state.vertex_addr;
-
-  for (int i = lower; i < upper; i++, vertex_addr += vertex_size) {
-
-    for (int j = 0; j < 2; j++) {
-
-      u32 addr = vertex_addr + pos_off + j * pos_size;
-
-      if (pos_size == 2) {
-        short *v = (short *)addr;
-
-        if (*v != 0) {
           if (*v == 480 || *v == 960)
             *v = 960;
           else if (*v == 272 || *v == 544)
