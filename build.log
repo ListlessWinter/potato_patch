@@ -1,179 +1,177 @@
 psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600   -c -o main.o main.c
 main.c: In function 'patchGeList':
-main.c:607:20: error: 'base_addr' undeclared (first use in this function)
-  607 |   u8 *vptr = (u8 *)base_addr;
-      |                    ^~~~~~~~~
-main.c:607:20: note: each undeclared identifier is reported only once for each function it appears in
-main.c:615:25: error: 'vertCount' undeclared (first use in this function)
-  615 |     for (int i = 0; i < vertCount; i++) {
-      |                         ^~~~~~~~~
-main.c:617:36: error: 'pos_off' undeclared (first use in this function)
-  617 |       short *vx = (short *)(vptr + pos_off);
-      |                                    ^~~~~~~
-main.c:640:15: error: 'vertex_size' undeclared (first use in this function)
-  640 |       vptr += vertex_size;
-      |               ^~~~~~~~~~~
-main.c:671:16: error: 'count' undeclared (first use in this function)
-  671 |   AdvanceVerts(count, vertex_size);
-      |                ^~~~~
-main.c:681:16: error: 'lower' undeclared (first use in this function)
-  681 |   for (int i = lower; i < upper; i++, vertex_addr += vertex_size) {
-      |                ^~~~~
-main.c:681:27: error: 'upper' undeclared (first use in this function)
-  681 |   for (int i = lower; i < upper; i++, vertex_addr += vertex_size) {
-      |                           ^~~~~
-main.c:718:7: error: case label not within a switch statement
-  718 |       case GE_CMD_FRAMEBUFPIXFORMAT:
+main.c:639:16: error: 'v' undeclared (first use in this function)
+  639 |           if (*v == 480 || *v == 960)
+      |                ^
+main.c:639:16: note: each undeclared identifier is reported only once for each function it appears in
+main.c:647:9: error: 'else' without a previous 'if'
+  647 |       } else if (pos_size == 4) {
+      |         ^~~~
+main.c:647:18: error: 'pos_size' undeclared (first use in this function); did you mean 'possize'?
+  647 |       } else if (pos_size == 4) {
+      |                  ^~~~~~~~
+      |                  possize
+main.c:648:29: error: 'addr' undeclared (first use in this function)
+  648 |         float *f = (float *)addr;
+      |                             ^~~~
+main.c:476:5: warning: unused variable 't' [-Wunused-variable]
+  476 |   } t;
+      |     ^
+main.c: At top level:
+main.c:662:3: warning: data definition has no type or storage class
+  662 |   AdvanceVerts(count, vertex_size);
+      |   ^~~~~~~~~~~~
+main.c:662:3: error: type defaults to 'int' in declaration of 'AdvanceVerts' [-Wimplicit-int]
+main.c:662:3: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+main.c:662:3: error: conflicting types for 'AdvanceVerts'; have 'int()'
+main.c:342:6: note: previous definition of 'AdvanceVerts' with type 'void(int,  int)'
+  342 | void AdvanceVerts(int count, int vertex_size) {
+      |      ^~~~~~~~~~~~
+main.c:663:3: error: expected identifier or '(' before 'break'
+  663 |   break;
+      |   ^~~~~
+main.c:664:1: error: expected identifier or '(' before '}' token
+  664 | }
+      | ^
+main.c:666:7: error: expected identifier or '(' before 'case'
+  666 |       case GE_CMD_FRAMEBUFPIXFORMAT:
       |       ^~~~
-main.c:719:18: error: 'cmd' undeclared (first use in this function)
-  719 |         *list = (cmd << 24) | PIXELFORMAT;
+main.c:668:9: error: expected identifier or '(' before 'break'
+  668 |         break;
+      |         ^~~~~
+main.c:670:7: error: expected identifier or '(' before 'case'
+  670 |       case GE_CMD_FRAMEBUFPTR:
+      |       ^~~~
+main.c:742:7: error: expected identifier or '(' before 'case'
+  742 |       case GE_CMD_ZBUFPTR:
+      |       ^~~~
+main.c:744:9: error: expected identifier or '(' before 'break'
+  744 |         break;
+      |         ^~~~~
+main.c:746:7: error: expected identifier or '(' before 'case'
+  746 |       case GE_CMD_ZBUFWIDTH:
+      |       ^~~~
+main.c:748:9: error: expected identifier or '(' before 'break'
+  748 |         break;
+      |         ^~~~~
+main.c:750:7: error: expected identifier or '(' before 'case'
+  750 |       case GE_CMD_TEXADDR0:
+      |       ^~~~
+main.c:792:7: error: expected identifier or '(' before 'case'
+  792 |       case GE_CMD_VIEWPORTXSCALE:
+      |       ^~~~
+main.c:794:10: error: expected '=', ',', ';', 'asm' or '__attribute__' before '.' token
+  794 |         t.f = (t.f < 0) ? -(WIDTH / 2) : (WIDTH / 2);
+      |          ^
+main.c:795:9: warning: data definition has no type or storage class
+  795 |         *list = (cmd << 24) | (t.i >> 8);
+      |         ^
+main.c:795:10: error: type defaults to 'int' in declaration of 'list' [-Wimplicit-int]
+  795 |         *list = (cmd << 24) | (t.i >> 8);
+      |          ^~~~
+main.c:795:18: error: 'cmd' undeclared here (not in a function)
+  795 |         *list = (cmd << 24) | (t.i >> 8);
       |                  ^~~
-main.c:720:9: error: break statement not within loop or switch
-  720 |         break;
-      |         ^~~~~
-main.c:722:7: error: case label not within a switch statement
-  722 |       case GE_CMD_FRAMEBUFPTR:
-      |       ^~~~
-main.c:723:7: error: case label not within a switch statement
-  723 |       case GE_CMD_FRAMEBUFWIDTH:
-      |       ^~~~
-main.c:727:31: error: 'op' undeclared (first use in this function); did you mean 'pop'?
-  727 |           state.framebufptr = op;
-      |                               ^~
-      |                               pop
-main.c:791:9: error: break statement not within loop or switch
-  791 |         break;
-      |         ^~~~~
-main.c:794:7: error: case label not within a switch statement
-  794 |       case GE_CMD_ZBUFPTR:
-      |       ^~~~
-main.c:796:9: error: break statement not within loop or switch
+main.c:795:32: error: 't' undeclared here (not in a function); did you mean 'tm'?
+  795 |         *list = (cmd << 24) | (t.i >> 8);
+      |                                ^
+      |                                tm
+main.c:796:9: error: expected identifier or '(' before 'break'
   796 |         break;
       |         ^~~~~
-main.c:798:7: error: case label not within a switch statement
-  798 |       case GE_CMD_ZBUFWIDTH:
+main.c:798:7: error: expected identifier or '(' before 'case'
+  798 |       case GE_CMD_VIEWPORTYSCALE:
       |       ^~~~
-main.c:800:9: error: break statement not within loop or switch
-  800 |         break;
+main.c:800:10: error: expected '=', ',', ';', 'asm' or '__attribute__' before '.' token
+  800 |         t.f = (t.f < 0) ? -(HEIGHT / 2) : (HEIGHT / 2);
+      |          ^
+main.c:801:9: warning: data definition has no type or storage class
+  801 |         *list = (cmd << 24) | (t.i >> 8);
+      |         ^
+main.c:801:10: error: type defaults to 'int' in declaration of 'list' [-Wimplicit-int]
+  801 |         *list = (cmd << 24) | (t.i >> 8);
+      |          ^~~~
+main.c:801:10: error: redefinition of 'list'
+main.c:795:10: note: previous definition of 'list' with type 'int *'
+  795 |         *list = (cmd << 24) | (t.i >> 8);
+      |          ^~~~
+main.c:802:9: error: expected identifier or '(' before 'break'
+  802 |         break;
       |         ^~~~~
-main.c:802:7: error: case label not within a switch statement
-  802 |       case GE_CMD_TEXADDR0:
+main.c:804:7: error: expected identifier or '(' before 'case'
+  804 |       case GE_CMD_VIEWPORTXCENTER:
       |       ^~~~
-main.c:803:7: error: case label not within a switch statement
-  803 |       case GE_CMD_TEXADDR1:
-      |       ^~~~
-main.c:804:7: error: case label not within a switch statement
-  804 |       case GE_CMD_TEXADDR2:
-      |       ^~~~
-main.c:805:7: error: case label not within a switch statement
-  805 |       case GE_CMD_TEXADDR3:
-      |       ^~~~
-main.c:806:7: error: case label not within a switch statement
-  806 |       case GE_CMD_TEXADDR4:
-      |       ^~~~
-main.c:807:7: error: case label not within a switch statement
-  807 |       case GE_CMD_TEXADDR5:
-      |       ^~~~
-main.c:808:7: error: case label not within a switch statement
-  808 |       case GE_CMD_TEXADDR6:
-      |       ^~~~
-main.c:809:7: error: case label not within a switch statement
-  809 |       case GE_CMD_TEXADDR7:
-      |       ^~~~
-main.c:810:7: error: case label not within a switch statement
-  810 |       case GE_CMD_TEXBUFWIDTH0:
-      |       ^~~~
-main.c:811:7: error: case label not within a switch statement
-  811 |       case GE_CMD_TEXBUFWIDTH1:
-      |       ^~~~
-main.c:812:7: error: case label not within a switch statement
-  812 |       case GE_CMD_TEXBUFWIDTH2:
-      |       ^~~~
-main.c:813:7: error: case label not within a switch statement
-  813 |       case GE_CMD_TEXBUFWIDTH3:
-      |       ^~~~
-main.c:814:7: error: case label not within a switch statement
-  814 |       case GE_CMD_TEXBUFWIDTH4:
-      |       ^~~~
-main.c:815:7: error: case label not within a switch statement
-  815 |       case GE_CMD_TEXBUFWIDTH5:
-      |       ^~~~
-main.c:816:7: error: case label not within a switch statement
-  816 |       case GE_CMD_TEXBUFWIDTH6:
-      |       ^~~~
-main.c:817:7: error: case label not within a switch statement
-  817 |       case GE_CMD_TEXBUFWIDTH7:
-      |       ^~~~
-main.c:841:9: error: break statement not within loop or switch
-  841 |         break;
+main.c:806:9: warning: data definition has no type or storage class
+  806 |         *list = (cmd << 24) | (t.i >> 8);
+      |         ^
+main.c:806:10: error: type defaults to 'int' in declaration of 'list' [-Wimplicit-int]
+  806 |         *list = (cmd << 24) | (t.i >> 8);
+      |          ^~~~
+main.c:806:10: error: redefinition of 'list'
+main.c:795:10: note: previous definition of 'list' with type 'int *'
+  795 |         *list = (cmd << 24) | (t.i >> 8);
+      |          ^~~~
+main.c:807:9: error: expected identifier or '(' before 'break'
+  807 |         break;
       |         ^~~~~
-main.c:844:7: error: case label not within a switch statement
-  844 |       case GE_CMD_VIEWPORTXSCALE:
+main.c:809:7: error: expected identifier or '(' before 'case'
+  809 |       case GE_CMD_VIEWPORTYCENTER:
       |       ^~~~
-main.c:845:15: error: 'data' undeclared (first use in this function)
-  845 |         t.i = data << 8;
-      |               ^~~~
-main.c:848:9: error: break statement not within loop or switch
-  848 |         break;
+main.c:811:9: warning: data definition has no type or storage class
+  811 |         *list = (cmd << 24) | (t.i >> 8);
+      |         ^
+main.c:811:10: error: type defaults to 'int' in declaration of 'list' [-Wimplicit-int]
+  811 |         *list = (cmd << 24) | (t.i >> 8);
+      |          ^~~~
+main.c:811:10: error: redefinition of 'list'
+main.c:795:10: note: previous definition of 'list' with type 'int *'
+  795 |         *list = (cmd << 24) | (t.i >> 8);
+      |          ^~~~
+main.c:812:9: error: expected identifier or '(' before 'break'
+  812 |         break;
       |         ^~~~~
-main.c:850:7: error: case label not within a switch statement
-  850 |       case GE_CMD_VIEWPORTYSCALE:
+main.c:814:7: error: expected identifier or '(' before 'case'
+  814 |       case GE_CMD_OFFSETX:
       |       ^~~~
-main.c:854:9: error: break statement not within loop or switch
-  854 |         break;
+main.c:816:9: error: expected identifier or '(' before 'break'
+  816 |         break;
       |         ^~~~~
-main.c:856:7: error: case label not within a switch statement
-  856 |       case GE_CMD_VIEWPORTXCENTER:
+main.c:818:7: error: expected identifier or '(' before 'case'
+  818 |       case GE_CMD_OFFSETY:
       |       ^~~~
-main.c:859:9: error: break statement not within loop or switch
-  859 |         break;
+main.c:820:9: error: expected identifier or '(' before 'break'
+  820 |         break;
       |         ^~~~~
-main.c:861:7: error: case label not within a switch statement
-  861 |       case GE_CMD_VIEWPORTYCENTER:
+main.c:822:7: error: expected identifier or '(' before 'case'
+  822 |       case GE_CMD_REGION2:
       |       ^~~~
-main.c:864:9: error: break statement not within loop or switch
-  864 |         break;
+main.c:825:9: error: expected identifier or '(' before 'break'
+  825 |         break;
       |         ^~~~~
-main.c:866:7: error: case label not within a switch statement
-  866 |       case GE_CMD_OFFSETX:
-      |       ^~~~
-main.c:868:9: error: break statement not within loop or switch
-  868 |         break;
-      |         ^~~~~
-main.c:870:7: error: case label not within a switch statement
-  870 |       case GE_CMD_OFFSETY:
-      |       ^~~~
-main.c:872:9: error: break statement not within loop or switch
-  872 |         break;
-      |         ^~~~~
-main.c:874:7: error: case label not within a switch statement
-  874 |       case GE_CMD_REGION2:
-      |       ^~~~
-main.c:875:7: error: case label not within a switch statement
-  875 |       case GE_CMD_SCISSOR2:
-      |       ^~~~
-main.c:877:9: error: break statement not within loop or switch
-  877 |         break;
-      |         ^~~~~
-main.c:879:7: error: 'default' label not within a switch statement
-  879 |       default:
+main.c:827:7: error: expected identifier or '(' before 'default'
+  827 |       default:
       |       ^~~~~~~
-main.c:883:9: error: break statement not within loop or switch
-  883 |         break;
+main.c:829:9: error: expected identifier or '(' before 'if'
+  829 |         if (!list)
+      |         ^~
+main.c:831:9: error: expected identifier or '(' before 'break'
+  831 |         break;
       |         ^~~~~
-main.c: At top level:
-main.c:888:8: error: conflicting types for '_sceGeGetList'; have 'int (*)(int,  void *, int *)'
-  888 | int (* _sceGeGetList)(int qid, void *list, int *flag);
+main.c:832:5: error: expected identifier or '(' before '}' token
+  832 |     }
+      |     ^
+main.c:836:8: error: conflicting types for '_sceGeGetList'; have 'int (*)(int,  void *, int *)'
+  836 | int (* _sceGeGetList)(int qid, void *list, int *flag);
       |        ^~~~~~~~~~~~~
 main.c:37:15: note: previous declaration of '_sceGeGetList' with type 'int (*)(int,  void **, void **)'
    37 | extern int (* _sceGeGetList)(int qid, void **list, void **stall);
       |               ^~~~~~~~~~~~~
 main.c: In function 'sceGeListUpdateStallAddrPatched':
-main.c:927:9: warning: unused variable 's' [-Wunused-variable]
-  927 |     u32 s = (u32)stall & 0x0FFFFFFF;
+main.c:875:9: warning: unused variable 's' [-Wunused-variable]
+  875 |     u32 s = (u32)stall & 0x0FFFFFFF;
       |         ^
-main.c:926:9: warning: unused variable 'p' [-Wunused-variable]
-  926 |     u32 p = (u32)prev & 0x0FFFFFFF;
+main.c:874:9: warning: unused variable 'p' [-Wunused-variable]
+  874 |     u32 p = (u32)prev & 0x0FFFFFFF;
       |         ^
 main.c: At top level:
 main.c:248:12: warning: 'skip' defined but not used [-Wunused-variable]
