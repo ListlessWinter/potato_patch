@@ -63,7 +63,7 @@ static const u8 wtsize[4] = { 0, 1, 2, 4 }, wtalign[4] = { 0, 1, 2, 4 };
 
 #define ALIGN(x, align) (((x) + ((align) - 1)) & ~((align) - 1))
 
-void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off) {
+void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *tc_off, u8 *visit_off) {
   int tc = (op & GE_VTYPE_TC_MASK) >> GE_VTYPE_TC_SHIFT;
   int col = (op & GE_VTYPE_COL_MASK) >> GE_VTYPE_COL_SHIFT;
   int nrm = (op & GE_VTYPE_NRM_MASK) >> GE_VTYPE_NRM_SHIFT;
@@ -75,13 +75,11 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off) {
   u8 biggest = 0;
   u8 size = 0;
   u8 aligned_size = 0;
-  // u8 weightoff = 0, tcoff = 0, coloff = 0, nrmoff = 0;
+  u8 tcoff = 0;
   u8 posoff = 0;
   u8 visitoff = 0;
 
   if (weight) {
-    // size = ALIGN(size, wtalign[weight]);
-    // weightoff = size;
     size += wtsize[weight] * weightCount;
     if (wtalign[weight] > biggest)
       biggest = wtalign[weight];
@@ -92,7 +90,7 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off) {
     if (!visitoff && aligned_size != size)
       visitoff = size;
     size = aligned_size;
-    // tcoff = size;
+    tcoff = size;
     size += tcsize[tc];
     if (tcalign[tc] > biggest)
       biggest = tcalign[tc];
@@ -103,7 +101,6 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off) {
     if (!visitoff && aligned_size != size)
       visitoff = size;
     size = aligned_size;
-    // coloff = size;
     size += colsize[col];
     if (colalign[col] > biggest)
       biggest = colalign[col];
@@ -114,7 +111,6 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off) {
     if (!visitoff && aligned_size != size)
       visitoff = size;
     size = aligned_size;
-    // nrmoff = size;
     size += nrmsize[nrm];
     if (nrmalign[nrm] > biggest)
       biggest = nrmalign[nrm];
@@ -139,6 +135,7 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off) {
 
   *vertex_size = size;
   *pos_off = posoff;
+  *tc_off = tcoff;
   *visit_off = visitoff;
 }
 
@@ -262,9 +259,6 @@ static inline void tryFrameCopy()
     return;
 
   fb_copy_lock = 1;
-
-  // ≡ƒæë σ╝║σê╢ΓÇ£µ»Åσ╕ºµ£ÇσñÜΣ╕Çµ¼íΓÇ¥
-  copyFrameBuffer();
 
   fb_dirty = 0;
   fb_pending = 0;
@@ -510,8 +504,8 @@ void patchGeList(u32 *list, u32 *stall) {
 
           u32 count = num_points_u * num_points_v;
 
-          u8 vertex_size = 0, pos_off = 0, visit_off = 0;
-          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
+          u8 vertex_size = 0, pos_off = 0, tc_off = 0, visit_off = 0;
+          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &tc_off, &visit_off);
 
           AdvanceVerts(count, vertex_size);
         }
@@ -527,8 +521,8 @@ void patchGeList(u32 *list, u32 *stall) {
         if ((state.vertex_type & GE_VTYPE_THROUGH_MASK) == GE_VTYPE_THROUGH) {
           u32 count = data;
 
-          u8 vertex_size = 0, pos_off = 0, visit_off = 0;
-          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
+          u8 vertex_size = 0, pos_off = 0, tc_off = 0, visit_off = 0;
+          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &tc_off, &visit_off);
 
           AdvanceVerts(count, vertex_size);
         }
@@ -551,8 +545,8 @@ void patchGeList(u32 *list, u32 *stall) {
   // =========================================================
   // ≡ƒÜÇ 1. Θí╢τé╣Σ┐íµü»Φºúµ₧É
   // =========================================================
-  u8 vertex_size = 0, pos_off = 0, visit_off = 0;
-  getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
+  u8 vertex_size = 0, pos_off = 0, tc_off = 0, visit_off = 0;
+  getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &tc_off, &visit_off);
 
   u16 lower = 0;
   u16 upper = count;
@@ -586,6 +580,7 @@ void patchGeList(u32 *list, u32 *stall) {
   // ≡ƒÜÇ 4. σ░Åµë╣µ¼íΣ╝ÿσîû∩╝êUI / µÄëσ╕ºσà│Θö«µ¥Ñµ║É∩╝ë
   int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
   int pos_size = possize[pos] / 3;
+  int tc = (state.vertex_type & GE_VTYPE_TC_MASK) >> GE_VTYPE_TC_SHIFT;
 
   u8 *vptr = (u8 *)base_addr;
 
@@ -609,6 +604,25 @@ void patchGeList(u32 *list, u32 *stall) {
 
       *vx = x;
       *vy = y;
+      
+      if (x_in_range) {
+        if (tc == 2) {
+          u16 *tu = (u16 *)(vptr + tc_off);
+          u16 *tv = (u16 *)(vptr + tc_off + 2);
+          *tu = *tu << 1;
+          *tv = *tv << 1;
+        } else if (tc == 3) {
+          float *tu = (float *)(vptr + tc_off);
+          float *tv = (float *)(vptr + tc_off + 4);
+          *tu = *tu * 2.0f;
+          *tv = *tv * 2.0f;
+        } else if (tc == 1) {
+          u8 *tu = (u8 *)(vptr + tc_off);
+          u8 *tv = (u8 *)(vptr + tc_off + 1);
+          *tu = *tu << 1;
+          *tv = *tv << 1;
+        }
+      }
 
       vptr += vertex_size;
     }
@@ -619,10 +633,12 @@ void patchGeList(u32 *list, u32 *stall) {
 
       float x = *vx;
       float y = *vy;
+      
+      int x_in_range = (x > -1024.0f && x < 1024.0f);
 
       if (x != 0.0f) {
         if (x == 480.0f || x == 960.0f) x = 960.0f;
-        else if (x > -1024.0f && x < 1024.0f) x = x * 2.0f;
+        else if (x_in_range) x = x * 2.0f;
       }
 
       if (y != 0.0f) {
@@ -632,6 +648,25 @@ void patchGeList(u32 *list, u32 *stall) {
 
       *vx = x;
       *vy = y;
+      
+      if (x_in_range) {
+        if (tc == 2) {
+          u16 *tu = (u16 *)(vptr + tc_off);
+          u16 *tv = (u16 *)(vptr + tc_off + 2);
+          *tu = *tu << 1;
+          *tv = *tv << 1;
+        } else if (tc == 3) {
+          float *tu = (float *)(vptr + tc_off);
+          float *tv = (float *)(vptr + tc_off + 4);
+          *tu = *tu * 2.0f;
+          *tv = *tv * 2.0f;
+        } else if (tc == 1) {
+          u8 *tu = (u8 *)(vptr + tc_off);
+          u8 *tv = (u8 *)(vptr + tc_off + 1);
+          *tu = *tu << 1;
+          *tv = *tv << 1;
+        }
+      }
 
       vptr += vertex_size;
     }
@@ -905,30 +940,7 @@ int sceGeListSyncPatched(int qid, int syncType) {
   return _sceGeListSync(qid, syncType);
 }
 
-void copyFrameBuffer()
-{
-  if (!fb_dirty)
-    return;
 
-  // Γ¥ù Σ╕ìσ╗║Φ««µÅÉσëìµ╕à∩╝êµö╣Σ╕║σ░╛Θâ¿µ╕à∩╝ë
-  sceGuStart(GU_DIRECT, (void *)(RENDER_LIST | 0xA0000000));
-
-  sceGuCopyImage(
-    PIXELFORMAT,
-    dirty_x, dirty_y,
-    dirty_w, dirty_h,
-    PITCH,
-    (void *)VRAM_DRAW_BUFFER_OFFSET,
-    dirty_x, dirty_y,
-    PITCH,
-    (void *)DISPLAY_BUFFER
-  );
-
-  sceGuFinish();
-
-  // Γ£ö µö╛µ£ÇσÉÄµ¢┤σ«ëσà¿
-  fb_dirty = 0;
-}
 
 
 int sceGeDrawSyncPatched(int syncType)
