@@ -470,10 +470,7 @@ u32 *handleControlFlowCommands(u32 *list) {
 }
 
 void patchGeList(u32 *list, u32 *stall) {
-  union {
-    float f;
-    unsigned int i;
-  } t;
+
 
   for (; !stall || (stall && list != stall); list++) {
     u32 op = *list;
@@ -636,28 +633,7 @@ void patchGeList(u32 *list, u32 *stall) {
     }
   }
 
-          if (*v == 480 || *v == 960)
-            *v = 960;
-          else if (*v == 272 || *v == 544)
-            *v = 544;
-          else if (*v > -1024 && *v < 1024)
-            *v <<= 1;   // ≡ƒÜÇ µ»ö *2 µ¢┤σ┐½
-        }
 
-      } else if (pos_size == 4) {
-        float *f = (float *)addr;
-
-        if (*f != 0.0f) {
-          if (*f == 480.0f || *f == 960.0f)
-            *f = 960.0f;
-          else if (*f == 272.0f || *f == 544.0f)
-            *f = 544.0f;
-          else if (*f > -1024.0f && *f < 1024.0f)
-            *f *= 2.0f;
-        }
-      }
-    }
-  }
 
   AdvanceVerts(count, vertex_size);
   break;
