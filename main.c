@@ -227,10 +227,15 @@ static u32 last_list = 0;//新增加状态
 static int fb_dirty = 1;//FrameBuf
 static void *last_fb = NULL;//FrameBuf
 
+static int fb_pending = 0;
+static int fb_copy_lock = 0;//节拍器
+
 static int dirty_x = 0;
 static int dirty_y = 0;
 static int dirty_w = WIDTH;
 static int dirty_h = HEIGHT;
+
+void copyFrameBuffer(void);
 
 static inline void tryFrameCopy()
 {
@@ -863,16 +868,16 @@ int module_start(SceSize args, void *argp) {
   _sceGeListSync = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x03444EB4);
   _sceGeDrawSync = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xB287BD61);
 
-  sctrlHENPatchSyscall((u32)_sceGeEdramGetAddr, sceGeEdramGetAddrPatched);
-  sctrlHENPatchSyscall((u32)_sceGeEdramGetSize, sceGeEdramGetSizePatched);
+  sctrlHENPatchSyscall((void *)_sceGeEdramGetAddr, sceGeEdramGetAddrPatched);
+  sctrlHENPatchSyscall((void *)_sceGeEdramGetSize, sceGeEdramGetSizePatched);
 
-  sctrlHENPatchSyscall((u32)_sceGeListEnQueue, sceGeListEnQueuePatched);
-  sctrlHENPatchSyscall((u32)_sceGeListEnQueueHead, sceGeListEnQueueHeadPatched);
-  // sctrlHENPatchSyscall((u32)_sceGeListSync, sceGeListSyncPatched);
-  sctrlHENPatchSyscall((u32)_sceGeDrawSync, sceGeDrawSyncPatched);
+  sctrlHENPatchSyscall((void *)_sceGeListEnQueue, sceGeListEnQueuePatched);
+  sctrlHENPatchSyscall((void *)_sceGeListEnQueueHead, sceGeListEnQueueHeadPatched);
+  // sctrlHENPatchSyscall((void *)_sceGeListSync, sceGeListSyncPatched);
+  sctrlHENPatchSyscall((void *)_sceGeDrawSync, sceGeDrawSyncPatched);
 
   _sceDisplaySetFrameBuf = (void *)FindProc("sceDisplay_Service", "sceDisplay_driver", 0x289D82FE);
-  sctrlHENPatchSyscall((u32)_sceDisplaySetFrameBuf, sceDisplaySetFrameBufPatched);
+  sctrlHENPatchSyscall((void *)_sceDisplaySetFrameBuf, sceDisplaySetFrameBufPatched);
 
   // SceUID thid = sceKernelCreateThread("draw_thread", draw_thread, 0x11, 0x4000, 0, NULL);
   // if (thid >= 0)
