@@ -1,0 +1,17 @@
+psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600   -c -o main.o main.c
+main.c: In function 'sceGeListUpdateStallAddrPatched':
+main.c:799:9: warning: unused variable 's' [-Wunused-variable]
+  799 |     u32 s = (u32)stall & 0x0FFFFFFF;
+      |         ^
+main.c:798:9: warning: unused variable 'p' [-Wunused-variable]
+  798 |     u32 p = (u32)prev & 0x0FFFFFFF;
+      |         ^
+psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600   -c -o gu.o gu.c
+gu.c:130:6: error: conflicting types for 'sceGuStart'; have 'void(int,  void *)'
+  130 | void sceGuStart(int cid, void* list)
+      |      ^~~~~~~~~~
+In file included from gu.c:9:
+/usr/local/pspdev/psp/sdk/include/pspgu.h:568:5: note: previous declaration of 'sceGuStart' with type 'int(int,  void *)'
+  568 | int sceGuStart(int ctype, void* list);
+      |     ^~~~~~~~~~
+make: *** [<builtin>: gu.o] Error 1
