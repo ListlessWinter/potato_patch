@@ -470,6 +470,10 @@ u32 *handleControlFlowCommands(u32 *list) {
 }
 
 void patchGeList(u32 *list, u32 *stall) {
+  union {
+    float f;
+    unsigned int i;
+  } t;
 
 
   for (; !stall || (stall && list != stall); list++) {
@@ -811,7 +815,7 @@ void patchGeList(u32 *list, u32 *stall) {
 
 void *(* _sceGeEdramGetAddr)(void);
 unsigned int *(* _sceGeEdramGetSize)(void);
-int (* _sceGeGetList)(int qid, void *list, int *flag);
+int (* _sceGeGetList)(int qid, void **list, void **stall);
 int (* _sceGeListUpdateStallAddr)(int qid, void *stall);
 int (* _sceGeListEnQueue)(const void *list, void *stall, int cbid, PspGeListArgs *arg);
 int (* _sceGeListEnQueueHead)(const void *list, void *stall, int cbid, PspGeListArgs *arg);
