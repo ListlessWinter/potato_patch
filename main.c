@@ -536,33 +536,34 @@ void patchGeList(u32 *list, u32 *stall) {
         }
 
         int is_post_process = ((state.texbufptr[0] & 0xffffff) == (VRAM_DRAW_BUFFER_OFFSET & 0xffffff));
-        int tc = (state.vertex_type & GE_VTYPE_TC_MASK) >> GE_VTYPE_TC_SHIFT;
-        int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
-        int pos_size = possize[pos] / 3;
-        u32 vertex_addr = base_addr;
+        
+        if (is_post_process) {
+          int tc = (state.vertex_type & GE_VTYPE_TC_MASK) >> GE_VTYPE_TC_SHIFT;
+          int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
+          int pos_size = possize[pos] / 3;
+          u32 vertex_addr = base_addr;
 
-        for (int i = 0; i < vertCount; i++, vertex_addr += vertex_size) {
-          if (pos_size == 2) {
-            short *vx = (short *)(vertex_addr + pos_off);
-            short *vy = (short *)(vertex_addr + pos_off + 2);
-            
-            if (*vx == 480 || *vx == 960) *vx = 960;
-            else if (*vx > -1024 && *vx < 1024) *vx <<= 1;
-            
-            if (*vy == 272 || *vy == 544) *vy = 544;
-            else if (*vy > -1024 && *vy < 1024) *vy <<= 1;
-          } else if (pos_size == 4) {
-            float *vx = (float *)(vertex_addr + pos_off);
-            float *vy = (float *)(vertex_addr + pos_off + 4);
-            
-            if (*vx == 480.0f || *vx == 960.0f) *vx = 960.0f;
-            else if (*vx > -1024.0f && *vx < 1024.0f) *vx *= 2.0f;
-            
-            if (*vy == 272.0f || *vy == 544.0f) *vy = 544.0f;
-            else if (*vy > -1024.0f && *vy < 1024.0f) *vy *= 2.0f;
-          }
+          for (int i = 0; i < vertCount; i++, vertex_addr += vertex_size) {
+            if (pos_size == 2) {
+              short *vx = (short *)(vertex_addr + pos_off);
+              short *vy = (short *)(vertex_addr + pos_off + 2);
+              
+              if (*vx == 480 || *vx == 960) *vx = 960;
+              else if (*vx > -1024 && *vx < 1024) *vx <<= 1;
+              
+              if (*vy == 272 || *vy == 544) *vy = 544;
+              else if (*vy > -1024 && *vy < 1024) *vy <<= 1;
+            } else if (pos_size == 4) {
+              float *vx = (float *)(vertex_addr + pos_off);
+              float *vy = (float *)(vertex_addr + pos_off + 4);
+              
+              if (*vx == 480.0f || *vx == 960.0f) *vx = 960.0f;
+              else if (*vx > -1024.0f && *vx < 1024.0f) *vx *= 2.0f;
+              
+              if (*vy == 272.0f || *vy == 544.0f) *vy = 544.0f;
+              else if (*vy > -1024.0f && *vy < 1024.0f) *vy *= 2.0f;
+            }
 
-          if (is_post_process) {
             if (tc == 2) {
               u16 *tu = (u16 *)(vertex_addr + tc_off);
               u16 *tv = (u16 *)(vertex_addr + tc_off + 2);
