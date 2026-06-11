@@ -5,30 +5,13 @@ main.c:769:9: error: 't' undeclared (first use in this function); did you mean '
       |         ^
       |         tm
 main.c:769:9: note: each undeclared identifier is reported only once for each function it appears in
-main.c: In function 'sceGeListUpdateStallAddrPatched':
-main.c:851:9: warning: unused variable 's' [-Wunused-variable]
-  851 |     u32 s = (u32)stall & 0x0FFFFFFF;
-      |         ^
-main.c:850:9: warning: unused variable 'p' [-Wunused-variable]
-  850 |     u32 p = (u32)prev & 0x0FFFFFFF;
-      |         ^
-main.c: In function 'patchGeList':
-main.c:1005:1: error: expected declaration or statement at end of input
- 1005 | }
-      | ^
-main.c:812:8: warning: variable '_sceGeGetList' set but not used [-Wunused-but-set-variable]
-  812 | int (* _sceGeGetList)(int qid, void *list, int *flag);
-      |        ^~~~~~~~~~~~~
-main.c:1005:1: error: expected declaration or statement at end of input
- 1005 | }
-      | ^
 main.c: At top level:
-main.c:976:5: warning: 'module_start' defined but not used [-Wunused-function]
-  976 | int module_start(SceSize args, void *argp) {
-      |     ^~~~~~~~~~~~
-main.c:904:5: warning: 'sceGeListSyncPatched' defined but not used [-Wunused-function]
-  904 | int sceGeListSyncPatched(int qid, int syncType) {
-      |     ^~~~~~~~~~~~~~~~~~~~
+main.c:814:8: error: conflicting types for '_sceGeGetList'; have 'int (*)(int,  void *, int *)'
+  814 | int (* _sceGeGetList)(int qid, void *list, int *flag);
+      |        ^~~~~~~~~~~~~
+main.c:37:15: note: previous declaration of '_sceGeGetList' with type 'int (*)(int,  void **, void **)'
+   37 | extern int (* _sceGeGetList)(int qid, void **list, void **stall);
+      |               ^~~~~~~~~~~~~
 main.c:248:12: warning: 'skip' defined but not used [-Wunused-variable]
   248 | static int skip = 0;//τº╗σè¿ΘÇƒσ║ªσèáΘÇƒ∩╝îΘÖìΣ╜ÄΦ░âτö¿apiΘóæτÄç
       |            ^~~~
