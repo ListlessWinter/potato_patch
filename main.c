@@ -241,6 +241,8 @@ static int dirty_y = 0;
 static int dirty_w = WIDTH;
 static int dirty_h = HEIGHT;
 
+void copyFrameBuffer();
+
 static inline void tryFrameCopy()
 {
   if (!fb_pending)
@@ -444,7 +446,7 @@ u32 *handleControlFlowCommands(u32 *list) {
           state.finished = 1;
           return NULL;
 
-        Θ╗ÿΦ«ñ:
+        default:
           break;
       }
       break;
@@ -585,120 +587,6 @@ void patchGeList(u32 *list, u32 *stall) {
   // =========================================================
   // ≡ƒÜÇ 5. µ¡úσ╕╕µÄ¿Φ┐¢∩╝êΣ╕ìσåìσüÜΘçìΦ«íτ«ù∩╝ë
   // =========================================================
-  AdvanceVerts(count, vertex_size);
-  break;
-}
-       
-  int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
-  int pos_size = possize[pos] / 3;
-
-  u8 *vptr = (u8 *)base_addr;
-
-  // =========================================================
-  // ≡ƒÜÇ ≡ƒÜÇ ≡ƒÜÇ µá╕σ┐âΣ╝ÿσîûΦ╖»σ╛ä∩╝êσìòσ▒éσ╛¬τÄ» + branchless + Φ┐₧τ╗¡σåàσ¡ÿ∩╝ë
-  // =========================================================
-
-  if (pos_size == 2) {
-    // ===== short Φ╖»σ╛ä∩╝êΣ╕╗σè¢Φ╖»σ╛ä∩╝ë=====
-    for (int i = 0; i < vertCount; i++) {
-
-      short *vx = (short *)(vptr + pos_off);
-      short *vy = (short *)(vptr + pos_off + 2);
-
-      short x = *vx;
-      short y = *vy;
-
-      // ===== branchless x =====
-      int x_is_special = (x == 480) | (x == 960);
-      int x_in_range   = (x > -1024) & (x < 1024);
-      int x_scaled     = x << 1;
-
-      x = x_is_special ? 960 : (x_in_range ? x_scaled : x);
-
-      // ===== branchless y =====
-      int y_is_special = (y == 272) | (y == 544);
-      int y_in_range   = (y > -1024) & (y < 1024);
-      int y_scaled     = y << 1;
-
-      y = y_is_special ? 544 : (y_in_range ? y_scaled : y);
-
-      *vx = x;
-      *vy = y;
-
-      vptr += vertex_size;
-    }
-
-  } else if (pos_size == 4) {
-    // ===== float Φ╖»σ╛ä∩╝êΣ┐¥σ«êΣ╝ÿσîûτëê∩╝ë=====
-    for (int i = 0; i < vertCount; i++) {
-
-      float *vx = (float *)(vptr + pos_off);
-      float *vy = (float *)(vptr + pos_off + 4);
-
-      float x = *vx;
-      float y = *vy;
-
-      if (x != 0.0f) {
-        if (x == 480.0f || x == 960.0f) x = 960.0f;
-        else if (x > -1024.0f && x < 1024.0f) x = x * 2.0f;
-      }
-
-      if (y != 0.0f) {
-        if (y == 272.0f || y == 544.0f) y = 544.0f;
-        else if (y > -1024.0f && y < 1024.0f) y = y * 2.0f;
-      }
-
-      *vx = x;
-      *vy = y;
-
-      vptr += vertex_size;
-    }
-  }
-
-  // ≡ƒÜÇ 5. µÄ¿Φ┐¢Θí╢τé╣µîçΘÆê
-  AdvanceVerts(count, vertex_size);
-
-  break;
-}
-  
-  int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
-  int pos_size = possize[pos] / 3;
-
-  u32 vertex_addr = state.vertex_addr;
-
-  for (int i = lower; i < upper; i++, vertex_addr += vertex_size) {
-
-    for (int j = 0; j < 2; j++) {
-
-      u32 addr = vertex_addr + pos_off + j * pos_size;
-
-      if (pos_size == 2) {
-        short *v = (short *)addr;
-
-        if (*v != 0) {
-          if (*v == 480 || *v == 960)
-            *v = 960;
-          else if (*v == 272 || *v == 544)
-            *v = 544;
-          else if (*v > -1024 && *v < 1024)
-            *v <<= 1;   // ≡ƒÜÇ µ»ö *2 µ¢┤σ┐½
-        }
-
-      } else if (pos_size == 4) {
-        float *f = (float *)addr;
-
-        if (*f != 0.0f) {
-          if (*f == 480.0f || *f == 960.0f)
-            *f = 960.0f;
-          else if (*f == 272.0f || *f == 544.0f)
-            *f = 544.0f;
-          else if (*f > -1024.0f && *f < 1024.0f)
-            *f *= 2.0f;
-        }
-      }
-    }
-  }
-
   AdvanceVerts(count, vertex_size);
   break;
 }
@@ -870,12 +758,10 @@ void patchGeList(u32 *list, u32 *stall) {
           return;
         break;
     }
-  }
-}
 
 void *(* _sceGeEdramGetAddr)(void);
 unsigned int *(* _sceGeEdramGetSize)(void);
-
+int (* _sceGeGetList)(int qid, void *list, int *flag);
 int (* _sceGeListUpdateStallAddr)(int qid, void *stall);
 int (* _sceGeListEnQueue)(const void *list, void *stall, int cbid, PspGeListArgs *arg);
 int (* _sceGeListEnQueueHead)(const void *list, void *stall, int cbid, PspGeListArgs *arg);
@@ -918,6 +804,7 @@ int sceGeListUpdateStallAddrPatched(int qid, void *stall)//σà│Θö«σÅÿσ
 
     // ≡ƒæë σ╖«Φ╖¥σñ¬σ░Å∩╝êΣ╛ïσªé < 64 σ¡ùΦèé∩╝ë∩╝îΦ«ñΣ╕║µÿ»ΓÇ£µèûσè¿µ¢┤µû░ΓÇ¥
     if ((u32)(s - p) < 128) {
+      // Σ╕ìµ¢┤µû░∩╝îτ¡ëµ¢┤σñºτÜäµÄ¿Φ┐¢
       pspSdkSetK1(k1);
       return 0;
     }
@@ -938,8 +825,7 @@ int sceGeListUpdateStallAddrPatched(int qid, void *stall)//σà│Θö«σÅÿσ
 }
 
 
-int sceGeListEnQueuePatched(const void *list, void *stall, int cbid, PspGeListArgs *arg)
-{
+int sceGeListEnQueuePatched(const void *list, void *stall, int cbid, PspGeListArgs *arg) {//µö╣σè¿3
   u32 list_addr = (u32)list & 0x0fffffff;
 
   // Γ£à 1. Θü┐σàìΘçìσñì patch σÉîΣ╕ÇΣ╕¬ list
@@ -967,14 +853,17 @@ int sceGeListEnQueueHeadPatched(const void *list, void *stall, int cbid, PspGeLi
   return _sceGeListEnQueueHead(list, stall, cbid, arg);
 }
 
-
+int sceGeListSyncPatched(int qid, int syncType) {
+  tryFrameCopy();
+  return _sceGeListSync(qid, syncType);
+}
 
 void copyFrameBuffer()
 {
   if (!fb_dirty)
     return;
 
-  // Γ¥ù Σ╕ìσ╗║Φ««µÅÉσëìµ╕à∩╝êµö╣Σ╕║σ░╛Θâ¿µ╕à∩╝ë  // ❗ 不建议提前清（改为尾部清）
+  // ❗ 不建议提前清（改为尾部清）
   sceGuStart(0, (void *)(RENDER_LIST | 0xA0000000));
 
   sceGuCopyImage(
@@ -991,7 +880,7 @@ void copyFrameBuffer()
   sceGuFinish();
   _sceGeListEnQueue((void *)RENDER_LIST, NULL, -1, NULL);
 
-  // ✔ 放最后更安全Γ£ö µö╛µ£ÇσÉÄµ¢┤σ«ëσà¿
+  // ✔ 放最后更安全
   fb_dirty = 0;
 }
 
@@ -1040,7 +929,7 @@ int sceDisplaySetFrameBufPatched(void *topaddr, int bufferwidth, int pixelformat
 int module_start(SceSize args, void *argp) {
   _sceGeEdramGetAddr = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xE47E40E4);
   _sceGeEdramGetSize = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x1F6752AD);
-
+  _sceGeGetList = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x67B01D8E);
   _sceGeListUpdateStallAddr = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xE0D68148);
   _sceGeListEnQueue = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xAB49E76A);
   _sceGeListEnQueueHead = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x1C0D95A6);
