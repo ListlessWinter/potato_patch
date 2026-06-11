@@ -51,7 +51,7 @@ static const u8 wtsize[4] = { 0, 1, 2, 4 }, wtalign[4] = { 0, 1, 2, 4 };
 
 #define ALIGN(x, align) (((x) + ((align) - 1)) & ~((align) - 1))
 
-void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off) {
+void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off, u8 *tc_off) {
   int tc = (op & GE_VTYPE_TC_MASK) >> GE_VTYPE_TC_SHIFT;
   int col = (op & GE_VTYPE_COL_MASK) >> GE_VTYPE_COL_SHIFT;
   int nrm = (op & GE_VTYPE_NRM_MASK) >> GE_VTYPE_NRM_SHIFT;
@@ -63,7 +63,7 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off) {
   u8 biggest = 0;
   u8 size = 0;
   u8 aligned_size = 0;
-  // u8 weightoff = 0, tcoff = 0, coloff = 0, nrmoff = 0;
+  u8 tcoff = 0;
   u8 posoff = 0;
   u8 visitoff = 0;
 
@@ -80,7 +80,7 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off) {
     if (!visitoff && aligned_size != size)
       visitoff = size;
     size = aligned_size;
-    // tcoff = size;
+    tcoff = size;
     size += tcsize[tc];
     if (tcalign[tc] > biggest)
       biggest = tcalign[tc];
@@ -128,6 +128,7 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off) {
   *vertex_size = size;
   *pos_off = posoff;
   *visit_off = visitoff;
+  if (tc_off) *tc_off = tcoff;
 }
 
 void GetIndexBounds(const void *inds, int count, u32 vertType, u16 *indexLowerBound, u16 *indexUpperBound) {
@@ -497,71 +498,93 @@ void patchGeList(u32 *list, u32 *stall) {
         break;
       }
 
-     case GE_CMD_PRIM://Θí╢τé╣Σ╝ÿσîû
-{
-  u16 count = data & 0xffff;
+      case GE_CMD_PRIM:
+      {
+        u16 count = data & 0xffff;
+        u8 prim = (data & 0x00ff0000) >> 16;
+        if (prim >= 7)
+          break;
 
-  // =========================================================
-  // ≡ƒÜÇ 0. THROUGH σ┐½ΘÇƒΦ┐çµ╗ñ∩╝êσ┐àΘí╗µ£Çσëì∩╝ë
-  // =========================================================
-  if ((state.vertex_type & GE_VTYPE_THROUGH_MASK) != GE_VTYPE_THROUGH) {
-    AdvanceVerts(count, 0);
-    break;
-  }
+        if ((state.vertex_type & GE_VTYPE_THROUGH_MASK) != GE_VTYPE_THROUGH) {
+          AdvanceVerts(count, 0);
+          break;
+        }
 
-  // =========================================================
-  // ≡ƒÜÇ 1. Θí╢τé╣Σ┐íµü»Φºúµ₧É
-  // =========================================================
-  u8 vertex_size = 0, pos_off = 0, visit_off = 0;
-  getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
+        u8 vertex_size = 0, pos_off = 0, visit_off = 0, tc_off = 0;
+        getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off, &tc_off);
 
-  u16 lower = 0;
-  u16 upper = count;
+        u16 lower = 0;
+        u16 upper = count;
 
-  if ((state.vertex_type & GE_VTYPE_IDX_MASK) != GE_VTYPE_IDX_NONE) {
-    GetIndexBounds((void *)state.index_addr, count, state.vertex_type, &lower, &upper);
-    upper += 1;
-  }
+        if ((state.vertex_type & GE_VTYPE_IDX_MASK) != GE_VTYPE_IDX_NONE) {
+          GetIndexBounds((void *)state.index_addr, count, state.vertex_type, &lower, &upper);
+          upper += 1;
+        }
 
-  int vertCount = upper - lower;
+        int vertCount = upper - lower;
 
-  // =========================================================
-  // ≡ƒÜÇ 2. σñºΦºäµ¿íτ¢┤µÄÑΦ╖│Φ┐ç∩╝êσ£░σ╜ó/Φìë/Φ┐£µÖ»∩╝ë
-  // =========================================================
-  if (vertCount > 1024) {
-    AdvanceVerts(count, vertex_size);
-    break;
-  }
+        if (vertCount > 1024) {
+          AdvanceVerts(count, vertex_size);
+          break;
+        }
 
-  // =========================================================
-  // ≡ƒÜÇ 3. Θí╢τé╣τ╝ôσ¡ÿ∩╝êµá╕σ┐â∩╝ÜΦ╖¿σ╕ºΦ╖│Φ┐ç CPU∩╝ë
-  // =========================================================
-  u32 base_addr = state.vertex_addr + lower * vertex_size;
+        u32 base_addr = state.vertex_addr + lower * vertex_size;
 
-  if (checkVertexCache(base_addr, state.vertex_type, vertCount)) {
-    AdvanceVerts(count, vertex_size);
-    break;
-  }
+        if (checkVertexCache(base_addr, state.vertex_type, vertCount)) {
+          AdvanceVerts(count, vertex_size);
+          break;
+        }
 
-  // =========================================================
-  // ≡ƒÜÇ 4. σ░Åµë╣µ¼íΣ╝ÿσîû∩╝êUI / µÄëσ╕ºσà│Θö«µ¥Ñµ║É∩╝ë
-  // =========================================================
-  if (count < 200) {
-    static u32 ui_frame_skip = 0;
+        int is_post_process = ((state.texbufptr[0] & 0xffffff) == (VRAM_DRAW_BUFFER_OFFSET & 0xffffff));
+        int tc = (state.vertex_type & GE_VTYPE_TC_MASK) >> GE_VTYPE_TC_SHIFT;
+        int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
+        int pos_size = possize[pos] / 3;
+        u32 vertex_addr = base_addr;
 
-    // ΓÜá∩╕Å σÅ¬σ»╣ UI σüÜΦèéµ╡ü∩╝îΣ╕ìσ╜▒σôìµêÿµûùσè¿Σ╜£
-    if ((ui_frame_skip++ & 1) == 0) {
-      AdvanceVerts(count, vertex_size);
-      break;
-    }
-  }
+        for (int i = 0; i < vertCount; i++, vertex_addr += vertex_size) {
+          if (pos_size == 2) {
+            short *vx = (short *)(vertex_addr + pos_off);
+            short *vy = (short *)(vertex_addr + pos_off + 2);
+            
+            if (*vx == 480 || *vx == 960) *vx = 960;
+            else if (*vx > -1024 && *vx < 1024) *vx <<= 1;
+            
+            if (*vy == 272 || *vy == 544) *vy = 544;
+            else if (*vy > -1024 && *vy < 1024) *vy <<= 1;
+          } else if (pos_size == 4) {
+            float *vx = (float *)(vertex_addr + pos_off);
+            float *vy = (float *)(vertex_addr + pos_off + 4);
+            
+            if (*vx == 480.0f || *vx == 960.0f) *vx = 960.0f;
+            else if (*vx > -1024.0f && *vx < 1024.0f) *vx *= 2.0f;
+            
+            if (*vy == 272.0f || *vy == 544.0f) *vy = 544.0f;
+            else if (*vy > -1024.0f && *vy < 1024.0f) *vy *= 2.0f;
+          }
 
-  // =========================================================
-  // ≡ƒÜÇ 5. µ¡úσ╕╕µÄ¿Φ┐¢∩╝êΣ╕ìσåìσüÜΘçìΦ«íτ«ù∩╝ë
-  // =========================================================
-  AdvanceVerts(count, vertex_size);
-  break;
-}
+          if (is_post_process) {
+            if (tc == 2) {
+              u16 *tu = (u16 *)(vertex_addr + tc_off);
+              u16 *tv = (u16 *)(vertex_addr + tc_off + 2);
+              *tu <<= 1;
+              *tv <<= 1;
+            } else if (tc == 3) {
+              float *tu = (float *)(vertex_addr + tc_off);
+              float *tv = (float *)(vertex_addr + tc_off + 4);
+              *tu *= 2.0f;
+              *tv *= 2.0f;
+            } else if (tc == 1) {
+              u8 *tu = (u8 *)(vertex_addr + tc_off);
+              u8 *tv = (u8 *)(vertex_addr + tc_off + 1);
+              *tu <<= 1;
+              *tv <<= 1;
+            }
+          }
+        }
+
+        AdvanceVerts(count, vertex_size);
+        break;
+      }
 
 
       case GE_CMD_FRAMEBUFPIXFORMAT:
@@ -778,10 +801,7 @@ int sceGeListUpdateStallAddrPatched(int qid, void *stall)//σà│Θö«σÅÿσ
     u32 s = (u32)stall & 0x0FFFFFFF;
 
     // ≡ƒæë σ╖«Φ╖¥σñ¬σ░Å∩╝êΣ╛ïσªé < 64 σ¡ùΦèé∩╝ë∩╝îΦ«ñΣ╕║µÿ»ΓÇ£µèûσè¿µ¢┤µû░ΓÇ¥
-    if ((u32)(s - p) < 128) {
-      pspSdkSetK1(k1);
-      return 0;
-    }
+
   }
 
   // =========================================================
