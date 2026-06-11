@@ -1,35 +1,8 @@
 psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600   -c -o main.o main.c
-main.c: In function 'patchGeList':
-main.c:509:16: error: 'GeState' has no member named 'has_draws'
-  509 |           state.has_draws = 1;
-      |                ^
-main.c:511:71: error: 'GeState' has no member named 'ge_cmd'; did you mean 'ge_cmds'?
-  511 |           if (state.ignore_framebuf || (state.ignore_texture && state.ge_cmd[GE_CMD_TEXTUREMAPENABLE])) {
-      |                                                                       ^~~~~~
-      |                                                                       ge_cmds
-main.c:536:23: error: 'GeState' has no member named 'ge_cmd'; did you mean 'ge_cmds'?
-  536 |             if (state.ge_cmd[GE_CMD_TEXTUREMAPENABLE] != 0) {
-      |                       ^~~~~~
-      |                       ge_cmds
-main.c: In function 'sceGeListUpdateStallAddrPatched':
-main.c:850:9: warning: unused variable 's' [-Wunused-variable]
-  850 |     u32 s = (u32)stall & 0x0FFFFFFF;
-      |         ^
-main.c:849:9: warning: unused variable 'p' [-Wunused-variable]
-  849 |     u32 p = (u32)prev & 0x0FFFFFFF;
-      |         ^
-main.c: In function 'sceGeDrawSyncPatched':
-main.c:907:7: error: implicit declaration of function 'copyFrameBuffer' [-Wimplicit-function-declaration]
-  907 |       copyFrameBuffer();
-      |       ^~~~~~~~~~~~~~~
-main.c: At top level:
-main.c:235:12: warning: 'skip' defined but not used [-Wunused-variable]
-  235 | static int skip = 0;//τº╗σè¿ΘÇƒσ║ªσèáΘÇƒ∩╝îΘÖìΣ╜ÄΦ░âτö¿apiΘóæτÄç
-      |            ^~~~
-main.c:233:12: warning: 'fb_copy_lock' defined but not used [-Wunused-variable]
-  233 | static int fb_copy_lock = 0;//ΦèéµïìσÖ¿
-      |            ^~~~~~~~~~~~
-main.c:232:12: warning: 'fb_last_vsync' defined but not used [-Wunused-variable]
-  232 | static int fb_last_vsync = 0;
-      |            ^~~~~~~~~~~~~
+main.c: In function 'sceDisplaySetFrameBufPatched':
+main.c:909:5: error: 'fb_pending' undeclared (first use in this function); did you mean 'sigpending'?
+  909 |     fb_pending = 1;
+      |     ^~~~~~~~~~
+      |     sigpending
+main.c:909:5: note: each undeclared identifier is reported only once for each function it appears in
 make: *** [<builtin>: main.o] Error 1
