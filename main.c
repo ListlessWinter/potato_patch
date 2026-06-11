@@ -30,7 +30,7 @@ PSP_MODULE_INFO("GePatch", 0x1007, 1, 0);
 #define VERTEX_CACHE_SIZE 512//改一下缓存大小
 #define log(...)
 
-void copyFrameBuffer(void);
+
 
 extern void *(* _sceGeEdramGetAddr)(void);
 extern unsigned int *(* _sceGeEdramGetSize)(void);
@@ -239,10 +239,7 @@ static void *last_fb = NULL;//FrameBuf
 
 
 static int fb_pending = 0;
-static int fb_last_vsync = 0;
-static int fb_copy_lock = 0;//ΦèéµïìσÖ¿
-
-static int skip = 0;//τº╗σè¿ΘÇƒσ║ªσèáΘÇƒ∩╝îΘÖìΣ╜ÄΦ░âτö¿apiΘóæτÄç
+static int fb_copy_lock = 0;
 
 
 static int dirty_x = 0;
@@ -949,7 +946,6 @@ int sceGeDrawSyncPatched(int syncType)
   if (!framebuf_set) {
     if (syncType == PSP_GE_LIST_DONE ||
         syncType == PSP_GE_LIST_DRAWING_DONE) {
-      copyFrameBuffer();
       rendered_in_sync = 1;
     }
   }
