@@ -51,7 +51,7 @@ static const u8 wtsize[4] = { 0, 1, 2, 4 }, wtalign[4] = { 0, 1, 2, 4 };
 
 #define ALIGN(x, align) (((x) + ((align) - 1)) & ~((align) - 1))
 
-void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off) {
+void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *tc_off, u8 *visit_off) {
   int tc = (op & GE_VTYPE_TC_MASK) >> GE_VTYPE_TC_SHIFT;
   int col = (op & GE_VTYPE_COL_MASK) >> GE_VTYPE_COL_SHIFT;
   int nrm = (op & GE_VTYPE_NRM_MASK) >> GE_VTYPE_NRM_SHIFT;
@@ -63,13 +63,11 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off) {
   u8 biggest = 0;
   u8 size = 0;
   u8 aligned_size = 0;
-  // u8 weightoff = 0, tcoff = 0, coloff = 0, nrmoff = 0;
+  u8 tcoff = 0;
   u8 posoff = 0;
   u8 visitoff = 0;
 
   if (weight) {
-    // size = ALIGN(size, wtalign[weight]);
-    // weightoff = size;
     size += wtsize[weight] * weightCount;
     if (wtalign[weight] > biggest)
       biggest = wtalign[weight];
@@ -80,7 +78,7 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off) {
     if (!visitoff && aligned_size != size)
       visitoff = size;
     size = aligned_size;
-    // tcoff = size;
+    tcoff = size;
     size += tcsize[tc];
     if (tcalign[tc] > biggest)
       biggest = tcalign[tc];
@@ -127,6 +125,7 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off) {
 
   *vertex_size = size;
   *pos_off = posoff;
+  *tc_off = tcoff;
   *visit_off = visitoff;
 }
 
@@ -241,26 +240,6 @@ static int dirty_y = 0;
 static int dirty_w = WIDTH;
 static int dirty_h = HEIGHT;
 
-void copyFrameBuffer();
-
-static inline void tryFrameCopy()
-{
-  if (!fb_pending)
-    return;
-
-  if (fb_copy_lock)
-    return;
-
-  fb_copy_lock = 1;
-
-  // ≡ƒæë σ╝║σê╢ΓÇ£µ»Åσ╕ºµ£ÇσñÜΣ╕Çµ¼íΓÇ¥
-  copyFrameBuffer();
-
-  fb_dirty = 0;
-  fb_pending = 0;
-
-  fb_copy_lock = 0;
-}
 
 static inline int checkVertexCache(u32 addr, u32 type, u16 count) {
   u32 hash = (addr >> 4) ^ type ^ count;
@@ -499,8 +478,8 @@ void patchGeList(u32 *list, u32 *stall) {
 
           u32 count = num_points_u * num_points_v;
 
-          u8 vertex_size = 0, pos_off = 0, visit_off = 0;
-          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
+          u8 vertex_size = 0, pos_off = 0, tc_off = 0, visit_off = 0;
+          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &tc_off, &visit_off);
 
           AdvanceVerts(count, vertex_size);
         }
@@ -516,8 +495,8 @@ void patchGeList(u32 *list, u32 *stall) {
         if ((state.vertex_type & GE_VTYPE_THROUGH_MASK) == GE_VTYPE_THROUGH) {
           u32 count = data;
 
-          u8 vertex_size = 0, pos_off = 0, visit_off = 0;
-          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
+          u8 vertex_size = 0, pos_off = 0, tc_off = 0, visit_off = 0;
+          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &tc_off, &visit_off);
 
           AdvanceVerts(count, vertex_size);
         }
@@ -525,71 +504,138 @@ void patchGeList(u32 *list, u32 *stall) {
         break;
       }
 
-     case GE_CMD_PRIM://Θí╢τé╣Σ╝ÿσîû
-{
-  u16 count = data & 0xffff;
+      case GE_CMD_PRIM:
+        {
+          state.has_draws = 1;
 
-  // =========================================================
-  // ≡ƒÜÇ 0. THROUGH σ┐½ΘÇƒΦ┐çµ╗ñ∩╝êσ┐àΘí╗µ£Çσëì∩╝ë
-  // =========================================================
-  if ((state.vertex_type & GE_VTYPE_THROUGH_MASK) != GE_VTYPE_THROUGH) {
-    AdvanceVerts(count, 0);
-    break;
-  }
+          if (state.ignore_framebuf || (state.ignore_texture && state.ge_cmd[GE_CMD_TEXTUREMAPENABLE])) {
+            *list = 0;
+            break;
+          }
 
-  // =========================================================
-  // ≡ƒÜÇ 1. Θí╢τé╣Σ┐íµü»Φºúµ₧É
-  // =========================================================
-  u8 vertex_size = 0, pos_off = 0, visit_off = 0;
-  getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
+          if ((state.vertex_type & GE_VTYPE_THROUGH_MASK) == GE_VTYPE_THROUGH) {
+            u16 count = data & 0xffff;
 
-  u16 lower = 0;
-  u16 upper = count;
+            u8 vertex_size = 0, pos_off = 0, tc_off = 0, visit_off = 0;
+            getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &tc_off, &visit_off);
 
-  if ((state.vertex_type & GE_VTYPE_IDX_MASK) != GE_VTYPE_IDX_NONE) {
-    GetIndexBounds((void *)state.index_addr, count, state.vertex_type, &lower, &upper);
-    upper += 1;
-  }
+            u16 lower = 0;
+            u16 upper = count;
+            if ((state.vertex_type & GE_VTYPE_IDX_MASK) != GE_VTYPE_IDX_NONE) {
+              GetIndexBounds((void *)state.index_addr, count, state.vertex_type, &lower, &upper);
+              upper += 1;
+            }
 
-  int vertCount = upper - lower;
+            int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
+            int pos_size = possize[pos] / 3;
 
-  // =========================================================
-  // ≡ƒÜÇ 2. σñºΦºäµ¿íτ¢┤µÄÑΦ╖│Φ┐ç∩╝êσ£░σ╜ó/Φìë/Φ┐£µÖ»∩╝ë
-  // =========================================================
-  if (vertCount > 1024) {
-    AdvanceVerts(count, vertex_size);
-    break;
-  }
+            int tc = (state.vertex_type & GE_VTYPE_TC_MASK) >> GE_VTYPE_TC_SHIFT;
+            int tc_size = tcsize[tc] / 2;
+            int is_post_process = 0;
 
-  // =========================================================
-  // ≡ƒÜÇ 3. Θí╢τé╣τ╝ôσ¡ÿ∩╝êµá╕σ┐â∩╝ÜΦ╖¿σ╕ºΦ╖│Φ┐ç CPU∩╝ë
-  // =========================================================
-  u32 base_addr = state.vertex_addr + lower * vertex_size;
+            if (state.ge_cmd[GE_CMD_TEXTUREMAPENABLE] != 0) {
+              u32 texaddr = ((state.texbufwidth[0] & 0x0f0000) << 8) | (state.texbufptr[0] & 0xffffff);
+              if (texaddr == 0x0000000 || texaddr == 0x0088000) {
+                is_post_process = 1;
+              }
+            }
 
-  if (checkVertexCache(base_addr, state.vertex_type, vertCount)) {
-    AdvanceVerts(count, vertex_size);
-    break;
-  }
+            u8 decoded = 0, encoded = 0;
+            u32 vertex_addr = state.vertex_addr + lower * vertex_size;
+            int i;
+            for (i = lower; i < upper; i++, vertex_addr += vertex_size) {
+              int j;
+              
+              if (is_post_process && tc_size > 0 && !decoded && !encoded) {
+                for (j = 0; j < 2; j++) {
+                  u32 t_addr = vertex_addr + tc_off + j * tc_size;
+                  if (tc_size == 2) {
+                    *(short *)t_addr <<= 1;
+                  } else if (tc_size == 4) {
+                    t.i = *(u32 *)t_addr;
+                    t.f *= 2.0f;
+                    *(u32 *)t_addr = t.i;
+                  }
+                }
+              }
 
-  // =========================================================
-  // ≡ƒÜÇ 4. σ░Åµë╣µ¼íΣ╝ÿσîû∩╝êUI / µÄëσ╕ºσà│Θö«µ¥Ñµ║É∩╝ë
-  // =========================================================
-  if (count < 200) {
-    static u32 ui_frame_skip = 0;
+              for (j = 0; j < 2; j++) {
+                u32 addr = vertex_addr + pos_off + j * pos_size;
+                switch (pos_size) {
+                  case 2:
+                  {
+                    short val = *(short *)addr;
+                    if (val != 0) {
+                      if (!decoded && visit_off && upper - i >= 2) {
+                        if (*(u8 *)(vertex_addr + visit_off + 0 * vertex_size) == ((val >> 0) & 0xff) &&
+                            *(u8 *)(vertex_addr + visit_off + 1 * vertex_size) == ((val >> 8) & 0xff)) {
+                          goto exit_loop;
+                        }
+                        decoded = 1;
+                      }
 
-    // ΓÜá∩╕Å σÅ¬σ»╣ UI σüÜΦèéµ╡ü∩╝îΣ╕ìσ╜▒σôìµêÿµûùσè¿Σ╜£
-    if ((ui_frame_skip++ & 1) == 0) {
-      AdvanceVerts(count, vertex_size);
-      break;
-    }
-  }
+                      if (val == 480 || val == 960)
+                        *(short *)addr = 960;
+                      else if (val == 272 || val == 544)
+                        *(short *)addr = 544;
+                      else if (val > -2048 && val < 2048)
+                        *(short *)addr *= 2;
 
-  // =========================================================
-  // ≡ƒÜÇ 5. µ¡úσ╕╕µÄ¿Φ┐¢∩╝êΣ╕ìσåìσüÜΘçìΦ«íτ«ù∩╝ë
-  // =========================================================
-  AdvanceVerts(count, vertex_size);
-  break;
-}
+                      if (!encoded && visit_off && upper - i >= 2) {
+                        val = *(short *)addr;
+                        *(u8 *)(vertex_addr + visit_off + 0 * vertex_size) = (val >> 0) & 0xff;
+                        *(u8 *)(vertex_addr + visit_off + 1 * vertex_size) = (val >> 8) & 0xff;
+                        encoded = 1;
+                      }
+                    }
+                    break;
+                  }
+
+                  case 4:
+                  {
+                    t.i = *(u32 *)addr;
+                    if (t.f != 0) {
+                      if (!decoded && visit_off && upper - i >= 4) {
+                        if (*(u8 *)(vertex_addr + visit_off + 0 * vertex_size) == ((t.i >> 0) & 0xff) &&
+                            *(u8 *)(vertex_addr + visit_off + 1 * vertex_size) == ((t.i >> 8) & 0xff) &&
+                            *(u8 *)(vertex_addr + visit_off + 2 * vertex_size) == ((t.i >> 16) & 0xff) &&
+                            *(u8 *)(vertex_addr + visit_off + 3 * vertex_size) == ((t.i >> 24) & 0xff)) {
+                          goto exit_loop;
+                        }
+                        decoded = 1;
+                      }
+
+                      if (t.f == 480 || t.f == 960) {
+                        t.f = 960;
+                        *(u32 *)addr = t.i;
+                      } else if (t.f == 272 || t.f == 544) {
+                        t.f = 544;
+                        *(u32 *)addr = t.i;
+                      } else if (t.f > -2048 && t.f < 2048) {
+                        t.f *= 2;
+                        *(u32 *)addr = t.i;
+                      }
+
+                      if (!encoded && visit_off && upper - i >= 4) {
+                        *(u8 *)(vertex_addr + visit_off + 0 * vertex_size) = (t.i >> 0) & 0xff;
+                        *(u8 *)(vertex_addr + visit_off + 1 * vertex_size) = (t.i >> 8) & 0xff;
+                        *(u8 *)(vertex_addr + visit_off + 2 * vertex_size) = (t.i >> 16) & 0xff;
+                        *(u8 *)(vertex_addr + visit_off + 3 * vertex_size) = (t.i >> 24) & 0xff;
+                        encoded = 1;
+                      }
+                    }
+                    break;
+                  }
+                }
+              }
+            }
+
+  exit_loop:
+            AdvanceVerts(count, vertex_size);
+          }
+
+          break;
+        }
 
       case GE_CMD_FRAMEBUFPIXFORMAT:
         *list = (cmd << 24) | PIXELFORMAT;
@@ -803,12 +849,7 @@ int sceGeListUpdateStallAddrPatched(int qid, void *stall)//σà│Θö«σÅÿσ
     u32 p = (u32)prev & 0x0FFFFFFF;
     u32 s = (u32)stall & 0x0FFFFFFF;
 
-    // ≡ƒæë σ╖«Φ╖¥σñ¬σ░Å∩╝êΣ╛ïσªé < 64 σ¡ùΦèé∩╝ë∩╝îΦ«ñΣ╕║µÿ»ΓÇ£µèûσè¿µ¢┤µû░ΓÇ¥
-    if ((u32)(s - p) < 128) {
-      // Σ╕ìµ¢┤µû░∩╝îτ¡ëµ¢┤σñºτÜäµÄ¿Φ┐¢
-      pspSdkSetK1(k1);
-      return 0;
-    }
+
   }
 
   // =========================================================
@@ -854,36 +895,7 @@ int sceGeListEnQueueHeadPatched(const void *list, void *stall, int cbid, PspGeLi
   return _sceGeListEnQueueHead(list, stall, cbid, arg);
 }
 
-int sceGeListSyncPatched(int qid, int syncType) {
-  tryFrameCopy();
-  return _sceGeListSync(qid, syncType);
-}
 
-void copyFrameBuffer()
-{
-  if (!fb_dirty)
-    return;
-
-  // ❗ 不建议提前清（改为尾部清）
-  sceGuStart(0, (void *)(RENDER_LIST | 0xA0000000));
-
-  sceGuCopyImage(
-    PIXELFORMAT,
-    dirty_x, dirty_y,
-    dirty_w, dirty_h,
-    PITCH,
-    (void *)VRAM_DRAW_BUFFER_OFFSET, // 原图起始地址
-    dirty_x, dirty_y,
-    PITCH,
-    (void *)DISPLAY_BUFFER           // 目标显示缓冲区
-  );
-
-  sceGuFinish();
-  _sceGeListEnQueue((void *)RENDER_LIST, NULL, -1, NULL);
-
-  // ✔ 放最后更安全
-  fb_dirty = 0;
-}
 
 
 int sceGeDrawSyncPatched(int syncType)
