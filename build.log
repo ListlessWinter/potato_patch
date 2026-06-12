@@ -1,17 +1,20 @@
 psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600   -c -o main.o main.c
 main.c: In function 'handleControlFlowCommands':
-main.c:430:10: error: stray '\342' in program
-  430 |         <U+0398><U+2557><U+00FF><U+03A6><U+00AB><U+00F1>:
+main.c:430:10: error: stray '\302' in program
+  430 |         <U+00E9><U+00BB><U+02DC><U+00E8><U+00AE><U+00A4>:
       |                 ^~~~~~~~
-main.c:430:9: error: unknown type name '\U00000398'
-  430 |         Θ╗ÿΦ«ñ:
+main.c:430:9: error: unknown type name '\U000000e9'
+  430 |         é»˜è®¤:
       |         ^
 main.c:430:13: error: stray '\302' in program
-  430 |         <U+0398><U+2557><U+00FF><U+03A6><U+00AB><U+00F1>:
+  430 |         <U+00E9><U+00BB><U+02DC><U+00E8><U+00AE><U+00A4>:
       |                                         ^~~~~~~~
-main.c:430:14: error: expected '=', ',', ';', 'asm' or '__attribute__' before '\U000000f1'
-  430 |         Θ╗ÿΦ«ñ:
-      |              ^
+main.c:430:14: error: stray '\302' in program
+  430 |         <U+00E9><U+00BB><U+02DC><U+00E8><U+00AE><U+00A4>:
+      |                                                 ^~~~~~~~
+main.c:430:15: error: expected '=', ',', ';', 'asm' or '__attribute__' before ':' token
+  430 |         é»˜è®¤:
+      |               ^
 main.c: In function 'patchGeList':
 main.c:578:20: error: 'base_addr' undeclared (first use in this function)
   578 |   u8 *vptr = (u8 *)base_addr;
@@ -183,10 +186,10 @@ main.c:897:9: warning: unused variable 'p' [-Wunused-variable]
       |         ^
 main.c: At top level:
 main.c:236:12: warning: 'skip' defined but not used [-Wunused-variable]
-  236 | static int skip = 0;//τº╗σè¿ΘÇƒσ║ªσèáΘÇƒ∩╝îΘÖìΣ╜ÄΦ░âτö¿apiΘóæτÄç
+  236 | static int skip = 0;//ç§»åŠ¨é€Ÿåº¦åŠ é€Ÿï¼Œé™ä½Žè°ƒç”¨apié¢‘çŽ‡
       |            ^~~~
 main.c:234:12: warning: 'fb_copy_lock' defined but not used [-Wunused-variable]
-  234 | static int fb_copy_lock = 0;//ΦèéµïìσÖ¿
+  234 | static int fb_copy_lock = 0;//èŠ‚æ‹å™¨
       |            ^~~~~~~~~~~~
 main.c:233:12: warning: 'fb_last_vsync' defined but not used [-Wunused-variable]
   233 | static int fb_last_vsync = 0;
