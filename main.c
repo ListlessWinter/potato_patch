@@ -51,7 +51,7 @@ static const u8 wtsize[4] = { 0, 1, 2, 4 }, wtalign[4] = { 0, 1, 2, 4 };
 
 #define ALIGN(x, align) (((x) + ((align) - 1)) & ~((align) - 1))
 
-void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *tc_off, u8 *visit_off) {
+void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *visit_off) {
   int tc = (op & GE_VTYPE_TC_MASK) >> GE_VTYPE_TC_SHIFT;
   int col = (op & GE_VTYPE_COL_MASK) >> GE_VTYPE_COL_SHIFT;
   int nrm = (op & GE_VTYPE_NRM_MASK) >> GE_VTYPE_NRM_SHIFT;
@@ -63,11 +63,13 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *tc_off, u8 *visit_o
   u8 biggest = 0;
   u8 size = 0;
   u8 aligned_size = 0;
-  u8 tcoff = 0;
+  // u8 weightoff = 0, tcoff = 0, coloff = 0, nrmoff = 0;
   u8 posoff = 0;
   u8 visitoff = 0;
 
   if (weight) {
+    // size = ALIGN(size, wtalign[weight]);
+    // weightoff = size;
     size += wtsize[weight] * weightCount;
     if (wtalign[weight] > biggest)
       biggest = wtalign[weight];
@@ -78,7 +80,7 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *tc_off, u8 *visit_o
     if (!visitoff && aligned_size != size)
       visitoff = size;
     size = aligned_size;
-    tcoff = size;
+    // tcoff = size;
     size += tcsize[tc];
     if (tcalign[tc] > biggest)
       biggest = tcalign[tc];
@@ -125,7 +127,6 @@ void getVertexInfo(u32 op, u8 *vertex_size, u8 *pos_off, u8 *tc_off, u8 *visit_o
 
   *vertex_size = size;
   *pos_off = posoff;
-  *tc_off = tcoff;
   *visit_off = visitoff;
 }
 
@@ -223,7 +224,24 @@ static int framebuf_set = 0;
 
 static u32 last_list = 0;//µû░σó₧σèáτè╢µÇü
 
+static int fb_dirty = 1;//FrameBuf
 static void *last_fb = NULL;//FrameBuf
+
+
+
+static int fb_pending = 0;
+static int fb_last_vsync = 0;
+static int fb_copy_lock = 0;//ΦèéµïìσÖ¿
+
+static int skip = 0;//τº╗σè¿ΘÇƒσ║ªσèáΘÇƒ∩╝îΘÖìΣ╜ÄΦ░âτö¿apiΘóæτÄç
+
+
+static int dirty_x = 0;
+static int dirty_y = 0;
+static int dirty_w = WIDTH;
+static int dirty_h = HEIGHT;
+
+
 
 static inline int checkVertexCache(u32 addr, u32 type, u16 count) {
   u32 hash = (addr >> 4) ^ type ^ count;
@@ -409,7 +427,7 @@ u32 *handleControlFlowCommands(u32 *list) {
           state.finished = 1;
           return NULL;
 
-        default:
+        Θ╗ÿΦ«ñ:
           break;
       }
       break;
@@ -462,8 +480,8 @@ void patchGeList(u32 *list, u32 *stall) {
 
           u32 count = num_points_u * num_points_v;
 
-          u8 vertex_size = 0, pos_off = 0, tc_off = 0, visit_off = 0;
-          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &tc_off, &visit_off);
+          u8 vertex_size = 0, pos_off = 0, visit_off = 0;
+          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
 
           AdvanceVerts(count, vertex_size);
         }
@@ -479,8 +497,8 @@ void patchGeList(u32 *list, u32 *stall) {
         if ((state.vertex_type & GE_VTYPE_THROUGH_MASK) == GE_VTYPE_THROUGH) {
           u32 count = data;
 
-          u8 vertex_size = 0, pos_off = 0, tc_off = 0, visit_off = 0;
-          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &tc_off, &visit_off);
+          u8 vertex_size = 0, pos_off = 0, visit_off = 0;
+          getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
 
           AdvanceVerts(count, vertex_size);
         }
@@ -488,139 +506,185 @@ void patchGeList(u32 *list, u32 *stall) {
         break;
       }
 
-      case GE_CMD_PRIM:
-        {
+     case GE_CMD_PRIM://Θí╢τé╣Σ╝ÿσîû
+{
+  u16 count = data & 0xffff;
 
-          if (state.ignore_framebuf || (state.ignore_texture && state.ge_cmds[GE_CMD_TEXTUREMAPENABLE])) {
-            *list = 0;
-            break;
-          }
+  // =========================================================
+  // ≡ƒÜÇ 0. THROUGH σ┐½ΘÇƒΦ┐çµ╗ñ∩╝êσ┐àΘí╗µ£Çσëì∩╝ë
+  // =========================================================
+  if ((state.vertex_type & GE_VTYPE_THROUGH_MASK) != GE_VTYPE_THROUGH) {
+    AdvanceVerts(count, 0);
+    break;
+  }
 
-          if ((state.vertex_type & GE_VTYPE_THROUGH_MASK) == GE_VTYPE_THROUGH) {
-            u16 count = data & 0xffff;
+  // =========================================================
+  // ≡ƒÜÇ 1. Θí╢τé╣Σ┐íµü»Φºúµ₧É
+  // =========================================================
+  u8 vertex_size = 0, pos_off = 0, visit_off = 0;
+  getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
 
-            u8 vertex_size = 0, pos_off = 0, tc_off = 0, visit_off = 0;
-            getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &tc_off, &visit_off);
+  u16 lower = 0;
+  u16 upper = count;
 
-            u16 lower = 0;
-            u16 upper = count;
-            if ((state.vertex_type & GE_VTYPE_IDX_MASK) != GE_VTYPE_IDX_NONE) {
-              GetIndexBounds((void *)state.index_addr, count, state.vertex_type, &lower, &upper);
-              upper += 1;
-            }
+  if ((state.vertex_type & GE_VTYPE_IDX_MASK) != GE_VTYPE_IDX_NONE) {
+    GetIndexBounds((void *)state.index_addr, count, state.vertex_type, &lower, &upper);
+    upper += 1;
+  }
 
-            int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
-            int pos_size = possize[pos] / 3;
+  int vertCount = upper - lower;
 
-            int tc = (state.vertex_type & GE_VTYPE_TC_MASK) >> GE_VTYPE_TC_SHIFT;
-            int tc_size = tcsize[tc] / 2;
-            int is_post_process = 0;
+  // =========================================================
+  // ≡ƒÜÇ 2. σñºΦºäµ¿íτ¢┤µÄÑΦ╖│Φ┐ç∩╝êσ£░σ╜ó/Φìë/Φ┐£µÖ»∩╝ë
+  // =========================================================
+  if (vertCount > 1024) {
+    AdvanceVerts(count, vertex_size);
+    break;
+  }
 
-            if (state.ge_cmds[GE_CMD_TEXTUREMAPENABLE] != 0) {
-              u32 texaddr = ((state.texbufwidth[0] & 0x0f0000) << 8) | (state.texbufptr[0] & 0xffffff);
-              if (texaddr == 0x0000000 || texaddr == 0x0088000) {
-                is_post_process = 1;
-              }
-            }
+  // =========================================================
+  // ≡ƒÜÇ 3. Θí╢τé╣τ╝ôσ¡ÿ∩╝êµá╕σ┐â∩╝ÜΦ╖¿σ╕ºΦ╖│Φ┐ç CPU∩╝ë
+  // =========================================================
+  u32 base_addr = state.vertex_addr + lower * vertex_size;
 
-            if (!is_post_process) goto exit_loop;
+  if (checkVertexCache(base_addr, state.vertex_type, vertCount)) {
+    AdvanceVerts(count, vertex_size);
+    break;
+  }
 
-            u8 decoded = 0, encoded = 0;
-            u32 vertex_addr = state.vertex_addr + lower * vertex_size;
-            int i;
-            for (i = lower; i < upper; i++, vertex_addr += vertex_size) {
-              int j;
-              
-              if (is_post_process && tc_size > 0 && !decoded && !encoded) {
-                for (j = 0; j < 2; j++) {
-                  u32 t_addr = vertex_addr + tc_off + j * tc_size;
-                  if (tc_size == 2) {
-                    *(short *)t_addr <<= 1;
-                  } else if (tc_size == 4) {
-                    t.i = *(u32 *)t_addr;
-                    t.f *= 2.0f;
-                    *(u32 *)t_addr = t.i;
-                  }
-                }
-              }
+  // =========================================================
+  // ≡ƒÜÇ 4. σ░Åµë╣µ¼íΣ╝ÿσîû∩╝êUI / µÄëσ╕ºσà│Θö«µ¥Ñµ║É∩╝ë
+  // =========================================================
+  if (count < 200) {
+    static u32 ui_frame_skip = 0;
 
-              for (j = 0; j < 2; j++) {
-                u32 addr = vertex_addr + pos_off + j * pos_size;
-                switch (pos_size) {
-                  case 2:
-                  {
-                    short val = *(short *)addr;
-                    if (val != 0) {
-                      if (!decoded && visit_off && upper - i >= 2) {
-                        if (*(u8 *)(vertex_addr + visit_off + 0 * vertex_size) == ((val >> 0) & 0xff) &&
-                            *(u8 *)(vertex_addr + visit_off + 1 * vertex_size) == ((val >> 8) & 0xff)) {
-                          goto exit_loop;
-                        }
-                        decoded = 1;
-                      }
+    // ΓÜá∩╕Å σÅ¬σ»╣ UI σüÜΦèéµ╡ü∩╝îΣ╕ìσ╜▒σôìµêÿµûùσè¿Σ╜£
+    if ((ui_frame_skip++ & 1) == 0) {
+      AdvanceVerts(count, vertex_size);
+      break;
+    }
+  }
 
-                      if (val == 480 || val == 960)
-                        *(short *)addr = 960;
-                      else if (val == 272 || val == 544)
-                        *(short *)addr = 544;
-                      else if (val > -2048 && val < 2048)
-                        *(short *)addr *= 2;
+  // =========================================================
+  // ≡ƒÜÇ 5. µ¡úσ╕╕µÄ¿Φ┐¢∩╝êΣ╕ìσåìσüÜΘçìΦ«íτ«ù∩╝ë
+  // =========================================================
+  AdvanceVerts(count, vertex_size);
+  break;
+}
+       
+  int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
+  int pos_size = possize[pos] / 3;
 
-                      if (!encoded && visit_off && upper - i >= 2) {
-                        val = *(short *)addr;
-                        *(u8 *)(vertex_addr + visit_off + 0 * vertex_size) = (val >> 0) & 0xff;
-                        *(u8 *)(vertex_addr + visit_off + 1 * vertex_size) = (val >> 8) & 0xff;
-                        encoded = 1;
-                      }
-                    }
-                    break;
-                  }
+  u8 *vptr = (u8 *)base_addr;
 
-                  case 4:
-                  {
-                    t.i = *(u32 *)addr;
-                    if (t.f != 0) {
-                      if (!decoded && visit_off && upper - i >= 4) {
-                        if (*(u8 *)(vertex_addr + visit_off + 0 * vertex_size) == ((t.i >> 0) & 0xff) &&
-                            *(u8 *)(vertex_addr + visit_off + 1 * vertex_size) == ((t.i >> 8) & 0xff) &&
-                            *(u8 *)(vertex_addr + visit_off + 2 * vertex_size) == ((t.i >> 16) & 0xff) &&
-                            *(u8 *)(vertex_addr + visit_off + 3 * vertex_size) == ((t.i >> 24) & 0xff)) {
-                          goto exit_loop;
-                        }
-                        decoded = 1;
-                      }
+  // =========================================================
+  // ≡ƒÜÇ ≡ƒÜÇ ≡ƒÜÇ µá╕σ┐âΣ╝ÿσîûΦ╖»σ╛ä∩╝êσìòσ▒éσ╛¬τÄ» + branchless + Φ┐₧τ╗¡σåàσ¡ÿ∩╝ë
+  // =========================================================
 
-                      if (t.f == 480 || t.f == 960) {
-                        t.f = 960;
-                        *(u32 *)addr = t.i;
-                      } else if (t.f == 272 || t.f == 544) {
-                        t.f = 544;
-                        *(u32 *)addr = t.i;
-                      } else if (t.f > -2048 && t.f < 2048) {
-                        t.f *= 2;
-                        *(u32 *)addr = t.i;
-                      }
+  if (pos_size == 2) {
+    // ===== short Φ╖»σ╛ä∩╝êΣ╕╗σè¢Φ╖»σ╛ä∩╝ë=====
+    for (int i = 0; i < vertCount; i++) {
 
-                      if (!encoded && visit_off && upper - i >= 4) {
-                        *(u8 *)(vertex_addr + visit_off + 0 * vertex_size) = (t.i >> 0) & 0xff;
-                        *(u8 *)(vertex_addr + visit_off + 1 * vertex_size) = (t.i >> 8) & 0xff;
-                        *(u8 *)(vertex_addr + visit_off + 2 * vertex_size) = (t.i >> 16) & 0xff;
-                        *(u8 *)(vertex_addr + visit_off + 3 * vertex_size) = (t.i >> 24) & 0xff;
-                        encoded = 1;
-                      }
-                    }
-                    break;
-                  }
-                }
-              }
-            }
+      short *vx = (short *)(vptr + pos_off);
+      short *vy = (short *)(vptr + pos_off + 2);
 
-  exit_loop:
-            AdvanceVerts(count, vertex_size);
-          }
+      short x = *vx;
+      short y = *vy;
 
-          break;
+      // ===== branchless x =====
+      int x_is_special = (x == 480) | (x == 960);
+      int x_in_range   = (x > -1024) & (x < 1024);
+      int x_scaled     = x << 1;
+
+      x = x_is_special ? 960 : (x_in_range ? x_scaled : x);
+
+      // ===== branchless y =====
+      int y_is_special = (y == 272) | (y == 544);
+      int y_in_range   = (y > -1024) & (y < 1024);
+      int y_scaled     = y << 1;
+
+      y = y_is_special ? 544 : (y_in_range ? y_scaled : y);
+
+      *vx = x;
+      *vy = y;
+
+      vptr += vertex_size;
+    }
+
+  } else if (pos_size == 4) {
+    // ===== float Φ╖»σ╛ä∩╝êΣ┐¥σ«êΣ╝ÿσîûτëê∩╝ë=====
+    for (int i = 0; i < vertCount; i++) {
+
+      float *vx = (float *)(vptr + pos_off);
+      float *vy = (float *)(vptr + pos_off + 4);
+
+      float x = *vx;
+      float y = *vy;
+
+      if (x != 0.0f) {
+        if (x == 480.0f || x == 960.0f) x = 960.0f;
+        else if (x > -1024.0f && x < 1024.0f) x = x * 2.0f;
+      }
+
+      if (y != 0.0f) {
+        if (y == 272.0f || y == 544.0f) y = 544.0f;
+        else if (y > -1024.0f && y < 1024.0f) y = y * 2.0f;
+      }
+
+      *vx = x;
+      *vy = y;
+
+      vptr += vertex_size;
+    }
+  }
+
+  // ≡ƒÜÇ 5. µÄ¿Φ┐¢Θí╢τé╣µîçΘÆê
+  AdvanceVerts(count, vertex_size);
+
+  break;
+}
+  
+  int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
+  int pos_size = possize[pos] / 3;
+
+  u32 vertex_addr = state.vertex_addr;
+
+  for (int i = lower; i < upper; i++, vertex_addr += vertex_size) {
+
+    for (int j = 0; j < 2; j++) {
+
+      u32 addr = vertex_addr + pos_off + j * pos_size;
+
+      if (pos_size == 2) {
+        short *v = (short *)addr;
+
+        if (*v != 0) {
+          if (*v == 480 || *v == 960)
+            *v = 960;
+          else if (*v == 272 || *v == 544)
+            *v = 544;
+          else if (*v > -1024 && *v < 1024)
+            *v <<= 1;   // ≡ƒÜÇ µ»ö *2 µ¢┤σ┐½
         }
+
+      } else if (pos_size == 4) {
+        float *f = (float *)addr;
+
+        if (*f != 0.0f) {
+          if (*f == 480.0f || *f == 960.0f)
+            *f = 960.0f;
+          else if (*f == 272.0f || *f == 544.0f)
+            *f = 544.0f;
+          else if (*f > -1024.0f && *f < 1024.0f)
+            *f *= 2.0f;
+        }
+      }
+    }
+  }
+
+  AdvanceVerts(count, vertex_size);
+  break;
+}
 
       case GE_CMD_FRAMEBUFPIXFORMAT:
         *list = (cmd << 24) | PIXELFORMAT;
@@ -653,17 +717,30 @@ void patchGeList(u32 *list, u32 *stall) {
           if (pitch == 512 || pitch == 480) {
       
             // ≡ƒæë UI / σ░Åbuffer
+            fb_dirty = 1;
+      
+            dirty_x = 0;
+            dirty_y = 0;
+            dirty_w = WIDTH;
+            dirty_h = HEIGHT / 2;
       
           }
           else if (pitch == 960) {
       
-            // ≡ƒæë σñº buffer∩╝êµ¡úσ╕╕ framebuffer∩╝ëΓÇöΓÇöµö»µîü dirty
+            // ≡ƒæë Σ╕╗σ£║µÖ» framebuffer∩╝êµ░╕Φ┐£µáçΦ«░ dirty∩╝ë
+            fb_dirty = 1;
+      
+            dirty_x = 0;
+            dirty_y = 0;
+            dirty_w = WIDTH;
+            dirty_h = HEIGHT;
       
           }
           else {
       
-            // ≡ƒæë σà╢Σ╗û bufferΓÇöΓÇöΣ╕ì dirty
+            // ≡ƒæë Θ¥₧µáçσçå buffer∩╝Üσ┐╜τòÑ
             state.ignore_framebuf = 1;
+            fb_dirty = 0;
           }
       
           // =========================================================
@@ -774,13 +851,12 @@ void patchGeList(u32 *list, u32 *stall) {
         list = handleControlFlowCommands(list);
         if (!list)
           return;
+        break;
     }
-  }
-}
 
 void *(* _sceGeEdramGetAddr)(void);
 unsigned int *(* _sceGeEdramGetSize)(void);
-// int (* _sceGeGetList)(int qid, void *list, int *flag);
+int (* _sceGeGetList)(int qid, void *list, int *flag);
 int (* _sceGeListUpdateStallAddr)(int qid, void *stall);
 int (* _sceGeListEnQueue)(const void *list, void *stall, int cbid, PspGeListArgs *arg);
 int (* _sceGeListEnQueueHead)(const void *list, void *stall, int cbid, PspGeListArgs *arg);
@@ -817,7 +893,17 @@ int sceGeListUpdateStallAddrPatched(int qid, void *stall)//σà│Θö«σÅÿσ
   // =========================================================
   // ≡ƒÜÇ 2. σ░Åσ╣àσÅÿσîû ΓåÆ σÉêσ╣╢∩╝êµá╕σ┐âΣ╝ÿσîû∩╝ë
   // =========================================================
+  if (prev != NULL) {
+    u32 p = (u32)prev & 0x0FFFFFFF;
+    u32 s = (u32)stall & 0x0FFFFFFF;
 
+    // ≡ƒæë σ╖«Φ╖¥σñ¬σ░Å∩╝êΣ╛ïσªé < 64 σ¡ùΦèé∩╝ë∩╝îΦ«ñΣ╕║µÿ»ΓÇ£µèûσè¿µ¢┤µû░ΓÇ¥
+    // if ((u32)(s - p) <128) {//Σ┐«µö╣
+      // Σ╕ìµ¢┤µû░∩╝îτ¡ëµ¢┤σñºτÜäµÄ¿Φ┐¢
+      pspSdkSetK1(k1);
+      return 0;
+    // }
+  }
 
   // =========================================================
   // ≡ƒÜÇ 3. Φ«░σ╜òµû░τè╢µÇü
@@ -862,8 +948,9 @@ int sceGeListEnQueueHeadPatched(const void *list, void *stall, int cbid, PspGeLi
   return _sceGeListEnQueueHead(list, stall, cbid, arg);
 }
 
-
-
+int sceGeListSyncPatched(int qid, int syncType) {
+  return _sceGeListSync(qid, syncType);
+}
 
 int sceGeDrawSyncPatched(int syncType)
 {
@@ -883,6 +970,8 @@ int sceDisplaySetFrameBufPatched(void *topaddr, int bufferwidth, int pixelformat
 {
   if (topaddr != last_fb) {
     last_fb = topaddr;
+    fb_dirty = 1;
+    fb_pending = 1;
   }
 
   return _sceDisplaySetFrameBuf(
@@ -906,7 +995,7 @@ int sceDisplaySetFrameBufPatched(void *topaddr, int bufferwidth, int pixelformat
 int module_start(SceSize args, void *argp) {
   _sceGeEdramGetAddr = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xE47E40E4);
   _sceGeEdramGetSize = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x1F6752AD);
-  // _sceGeGetList = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x67B01D8E);
+  _sceGeGetList = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x67B01D8E);
   _sceGeListUpdateStallAddr = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xE0D68148);
   _sceGeListEnQueue = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xAB49E76A);
   _sceGeListEnQueueHead = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0x1C0D95A6);
