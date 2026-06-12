@@ -523,6 +523,8 @@ void patchGeList(u32 *list, u32 *stall) {
               }
             }
 
+            if (!is_post_process) goto exit_loop;
+
             u8 decoded = 0, encoded = 0;
             u32 vertex_addr = state.vertex_addr + lower * vertex_size;
             int i;
