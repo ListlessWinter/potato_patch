@@ -1,183 +1,20 @@
 psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600   -c -o main.o main.c
 main.c: In function 'patchGeList':
-main.c:528:11: error: 'else' without a previous 'if'
-  528 |           else if (*v == 272 || *v == 544)
-      |           ^~~~
-main.c:528:21: error: 'v' undeclared (first use in this function)
-  528 |           else if (*v == 272 || *v == 544)
-      |                     ^
-main.c:528:21: note: each undeclared identifier is reported only once for each function it appears in
-main.c:534:9: error: 'else' without a previous 'if'
-  534 |       } else if (pos_size == 4) {
-      |         ^~~~
-main.c:534:18: error: 'pos_size' undeclared (first use in this function); did you mean 'possize'?
-  534 |       } else if (pos_size == 4) {
-      |                  ^~~~~~~~
-      |                  possize
-main.c:535:29: error: 'addr' undeclared (first use in this function)
-  535 |         float *f = (float *)addr;
-      |                             ^~~~
-main.c:466:5: warning: unused variable 't' [-Wunused-variable]
-  466 |   } t;
-      |     ^
-main.c: At top level:
-main.c:547:3: error: expected identifier or '(' before '}' token
-  547 |   }
-      |   ^
-main.c:549:3: warning: data definition has no type or storage class
-  549 |   AdvanceVerts(count, vertex_size);
-      |   ^~~~~~~~~~~~
-main.c:549:3: error: type defaults to 'int' in declaration of 'AdvanceVerts' [-Wimplicit-int]
-main.c:549:3: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
-main.c:549:3: error: conflicting types for 'AdvanceVerts'; have 'int()'
-main.c:332:6: note: previous definition of 'AdvanceVerts' with type 'void(int,  int)'
-  332 | void AdvanceVerts(int count, int vertex_size) {
-      |      ^~~~~~~~~~~~
-main.c:550:3: error: expected identifier or '(' before 'break'
-  550 |   break;
-      |   ^~~~~
-main.c:551:1: error: expected identifier or '(' before '}' token
-  551 | }
-      | ^
-main.c:553:7: error: expected identifier or '(' before 'case'
-  553 |       case GE_CMD_FRAMEBUFPIXFORMAT:
-      |       ^~~~
-main.c:555:9: error: expected identifier or '(' before 'break'
-  555 |         break;
-      |         ^~~~~
-main.c:557:7: error: expected identifier or '(' before 'case'
-  557 |       case GE_CMD_FRAMEBUFPTR:
-      |       ^~~~
-main.c:629:7: error: expected identifier or '(' before 'case'
-  629 |       case GE_CMD_ZBUFPTR:
-      |       ^~~~
-main.c:631:9: error: expected identifier or '(' before 'break'
-  631 |         break;
-      |         ^~~~~
-main.c:633:7: error: expected identifier or '(' before 'case'
-  633 |       case GE_CMD_ZBUFWIDTH:
-      |       ^~~~
-main.c:635:9: error: expected identifier or '(' before 'break'
-  635 |         break;
-      |         ^~~~~
-main.c:637:7: error: expected identifier or '(' before 'case'
-  637 |       case GE_CMD_TEXADDR0:
-      |       ^~~~
-main.c:679:7: error: expected identifier or '(' before 'case'
-  679 |       case GE_CMD_VIEWPORTXSCALE:
-      |       ^~~~
-main.c:681:10: error: expected '=', ',', ';', 'asm' or '__attribute__' before '.' token
-  681 |         t.f = (t.f < 0) ? -(WIDTH / 2) : (WIDTH / 2);
-      |          ^
-main.c:682:9: warning: data definition has no type or storage class
-  682 |         *list = (cmd << 24) | (t.i >> 8);
-      |         ^
-main.c:682:10: error: type defaults to 'int' in declaration of 'list' [-Wimplicit-int]
-  682 |         *list = (cmd << 24) | (t.i >> 8);
-      |          ^~~~
-main.c:682:18: error: 'cmd' undeclared here (not in a function)
-  682 |         *list = (cmd << 24) | (t.i >> 8);
-      |                  ^~~
-main.c:682:32: error: 't' undeclared here (not in a function); did you mean 'tm'?
-  682 |         *list = (cmd << 24) | (t.i >> 8);
-      |                                ^
-      |                                tm
-main.c:683:9: error: expected identifier or '(' before 'break'
-  683 |         break;
-      |         ^~~~~
-main.c:685:7: error: expected identifier or '(' before 'case'
-  685 |       case GE_CMD_VIEWPORTYSCALE:
-      |       ^~~~
-main.c:687:10: error: expected '=', ',', ';', 'asm' or '__attribute__' before '.' token
-  687 |         t.f = (t.f < 0) ? -(HEIGHT / 2) : (HEIGHT / 2);
-      |          ^
-main.c:688:9: warning: data definition has no type or storage class
-  688 |         *list = (cmd << 24) | (t.i >> 8);
-      |         ^
-main.c:688:10: error: type defaults to 'int' in declaration of 'list' [-Wimplicit-int]
-  688 |         *list = (cmd << 24) | (t.i >> 8);
-      |          ^~~~
-main.c:688:10: error: redefinition of 'list'
-main.c:682:10: note: previous definition of 'list' with type 'int *'
-  682 |         *list = (cmd << 24) | (t.i >> 8);
-      |          ^~~~
-main.c:689:9: error: expected identifier or '(' before 'break'
-  689 |         break;
-      |         ^~~~~
-main.c:691:7: error: expected identifier or '(' before 'case'
-  691 |       case GE_CMD_VIEWPORTXCENTER:
-      |       ^~~~
-main.c:693:9: warning: data definition has no type or storage class
-  693 |         *list = (cmd << 24) | (t.i >> 8);
-      |         ^
-main.c:693:10: error: type defaults to 'int' in declaration of 'list' [-Wimplicit-int]
-  693 |         *list = (cmd << 24) | (t.i >> 8);
-      |          ^~~~
-main.c:693:10: error: redefinition of 'list'
-main.c:682:10: note: previous definition of 'list' with type 'int *'
-  682 |         *list = (cmd << 24) | (t.i >> 8);
-      |          ^~~~
-main.c:694:9: error: expected identifier or '(' before 'break'
-  694 |         break;
-      |         ^~~~~
-main.c:696:7: error: expected identifier or '(' before 'case'
-  696 |       case GE_CMD_VIEWPORTYCENTER:
-      |       ^~~~
-main.c:698:9: warning: data definition has no type or storage class
-  698 |         *list = (cmd << 24) | (t.i >> 8);
-      |         ^
-main.c:698:10: error: type defaults to 'int' in declaration of 'list' [-Wimplicit-int]
-  698 |         *list = (cmd << 24) | (t.i >> 8);
-      |          ^~~~
-main.c:698:10: error: redefinition of 'list'
-main.c:682:10: note: previous definition of 'list' with type 'int *'
-  682 |         *list = (cmd << 24) | (t.i >> 8);
-      |          ^~~~
-main.c:699:9: error: expected identifier or '(' before 'break'
-  699 |         break;
-      |         ^~~~~
-main.c:701:7: error: expected identifier or '(' before 'case'
-  701 |       case GE_CMD_OFFSETX:
-      |       ^~~~
-main.c:703:9: error: expected identifier or '(' before 'break'
-  703 |         break;
-      |         ^~~~~
-main.c:705:7: error: expected identifier or '(' before 'case'
-  705 |       case GE_CMD_OFFSETY:
-      |       ^~~~
-main.c:707:9: error: expected identifier or '(' before 'break'
-  707 |         break;
-      |         ^~~~~
-main.c:709:7: error: expected identifier or '(' before 'case'
-  709 |       case GE_CMD_REGION2:
-      |       ^~~~
-main.c:712:9: error: expected identifier or '(' before 'break'
-  712 |         break;
-      |         ^~~~~
-main.c:714:7: error: expected identifier or '(' before 'default'
-  714 |       default:
-      |       ^~~~~~~
-main.c:716:9: error: expected identifier or '(' before 'if'
-  716 |         if (!list)
-      |         ^~
-main.c:718:9: error: expected identifier or '(' before 'break'
-  718 |         break;
-      |         ^~~~~
-main.c:719:5: error: expected identifier or '(' before '}' token
-  719 |     }
-      |     ^
+main.c:529:14: error: 'GeState' has no member named 'has_draws'
+  529 |         state.has_draws = 1;
+      |              ^
 main.c: In function 'sceGeListUpdateStallAddrPatched':
-main.c:762:9: warning: unused variable 's' [-Wunused-variable]
-  762 |     u32 s = (u32)stall & 0x0FFFFFFF;
+main.c:826:9: warning: unused variable 's' [-Wunused-variable]
+  826 |     u32 s = (u32)stall & 0x0FFFFFFF;
       |         ^
-main.c:761:9: warning: unused variable 'p' [-Wunused-variable]
-  761 |     u32 p = (u32)prev & 0x0FFFFFFF;
+main.c:825:9: warning: unused variable 'p' [-Wunused-variable]
+  825 |     u32 p = (u32)prev & 0x0FFFFFFF;
       |         ^
 main.c: At top level:
-main.c:238:12: warning: 'skip' defined but not used [-Wunused-variable]
-  238 | static int skip = 0;//ç§»åŠ¨é€Ÿåº¦åŠ é€Ÿï¼Œé™ä½Žè°ƒç”¨apié¢‘çŽ‡
+main.c:237:12: warning: 'skip' defined but not used [-Wunused-variable]
+  237 | static int skip = 0;//ç§»åŠ¨é€Ÿåº¦åŠ é€Ÿï¼Œé™ä½Žè°ƒç”¨apié¢‘çŽ‡
       |            ^~~~
-main.c:235:12: warning: 'fb_last_vsync' defined but not used [-Wunused-variable]
-  235 | static int fb_last_vsync = 0;
+main.c:234:12: warning: 'fb_last_vsync' defined but not used [-Wunused-variable]
+  234 | static int fb_last_vsync = 0;
       |            ^~~~~~~~~~~~~
 make: *** [<builtin>: main.o] Error 1
