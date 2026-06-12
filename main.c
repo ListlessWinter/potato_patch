@@ -427,7 +427,7 @@ u32 *handleControlFlowCommands(u32 *list) {
           state.finished = 1;
           return NULL;
 
-        é»˜è®¤:
+        default:
           break;
       }
       break;
@@ -639,48 +639,6 @@ void patchGeList(u32 *list, u32 *stall) {
   // ðŸš€ 5. æŽ¨è¿›é¡¶ç‚¹æŒ‡é’ˆ
   AdvanceVerts(count, vertex_size);
 
-  break;
-}
-  
-  int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
-  int pos_size = possize[pos] / 3;
-
-  u32 vertex_addr = state.vertex_addr;
-
-  for (int i = lower; i < upper; i++, vertex_addr += vertex_size) {
-
-    for (int j = 0; j < 2; j++) {
-
-      u32 addr = vertex_addr + pos_off + j * pos_size;
-
-      if (pos_size == 2) {
-        short *v = (short *)addr;
-
-        if (*v != 0) {
-          if (*v == 480 || *v == 960)
-            *v = 960;
-          else if (*v == 272 || *v == 544)
-            *v = 544;
-          else if (*v > -1024 && *v < 1024)
-            *v <<= 1;   // ðŸš€ æ¯” *2 æ›´å¿«
-        }
-
-      } else if (pos_size == 4) {
-        float *f = (float *)addr;
-
-        if (*f != 0.0f) {
-          if (*f == 480.0f || *f == 960.0f)
-            *f = 960.0f;
-          else if (*f == 272.0f || *f == 544.0f)
-            *f = 544.0f;
-          else if (*f > -1024.0f && *f < 1024.0f)
-            *f *= 2.0f;
-        }
-      }
-    }
-  }
-
-  AdvanceVerts(count, vertex_size);
   break;
 }
 
