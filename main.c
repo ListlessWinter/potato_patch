@@ -1,4 +1,4 @@
-﻿#include <pspsdk.h>
+#include <pspsdk.h>
 void copyFrameBuffer(void);
 #include <pspkernel.h>
 #include <pspge.h>
@@ -526,8 +526,6 @@ void patchGeList(u32 *list, u32 *stall) {
 
       case GE_CMD_PRIM:
       {
-        state.has_draws = 1;
-
         if (state.ignore_framebuf || (state.ignore_texture && state.ge_cmds[GE_CMD_TEXTUREMAPENABLE])) {
           *list = 0;
           break;
