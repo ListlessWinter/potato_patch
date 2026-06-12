@@ -1,4 +1,6 @@
-﻿#include <pspsdk.h>
+#include <pspsdk.h>
+
+void copyFrameBuffer(void);
 #include <pspkernel.h>
 #include <pspge.h>
 #include <pspgu.h>
@@ -444,7 +446,7 @@ u32 *handleControlFlowCommands(u32 *list) {
           state.finished = 1;
           return NULL;
 
-        é»˜è®¤:
+        default:
           break;
       }
       break;
@@ -523,161 +525,6 @@ void patchGeList(u32 *list, u32 *stall) {
         break;
       }
 
-     case GE_CMD_PRIM://é¡¶ç‚¹ä¼˜åŒ–
-{
-  u16 count = data & 0xffff;
-
-  // =========================================================
-  // ðŸš€ 0. THROUGH å¿«é€Ÿè¿‡æ»¤ï¼ˆå¿…é¡»æœ€å‰ï¼‰
-  // =========================================================
-  if ((state.vertex_type & GE_VTYPE_THROUGH_MASK) != GE_VTYPE_THROUGH) {
-    AdvanceVerts(count, 0);
-    break;
-  }
-
-  // =========================================================
-  // ðŸš€ 1. é¡¶ç‚¹ä¿¡æ¯è§£æž
-  // =========================================================
-  u8 vertex_size = 0, pos_off = 0, visit_off = 0;
-  getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
-
-  u16 lower = 0;
-  u16 upper = count;
-
-  if ((state.vertex_type & GE_VTYPE_IDX_MASK) != GE_VTYPE_IDX_NONE) {
-    GetIndexBounds((void *)state.index_addr, count, state.vertex_type, &lower, &upper);
-    upper += 1;
-  }
-
-  int vertCount = upper - lower;
-
-  // =========================================================
-  // ðŸš€ 2. å¤§è§„æ¨¡ç›´æŽ¥è·³è¿‡ï¼ˆåœ°å½¢/è‰/è¿œæ™¯ï¼‰
-  // =========================================================
-  if (vertCount > 1024) {
-    AdvanceVerts(count, vertex_size);
-    break;
-  }
-
-  // =========================================================
-  // ðŸš€ 3. é¡¶ç‚¹ç¼“å­˜ï¼ˆæ ¸å¿ƒï¼šè·¨å¸§è·³è¿‡ CPUï¼‰
-  // =========================================================
-  u32 base_addr = state.vertex_addr + lower * vertex_size;
-
-  if (checkVertexCache(base_addr, state.vertex_type, vertCount)) {
-    AdvanceVerts(count, vertex_size);
-    break;
-  }
-
-  // =========================================================
-  // ðŸš€ 4. å°æ‰¹æ¬¡ä¼˜åŒ–ï¼ˆUI / æŽ‰å¸§å…³é”®æ¥æºï¼‰
-  // =========================================================
-  if (count < 200) {
-    static u32 ui_frame_skip = 0;
-
-    // âš ï¸ åªå¯¹ UI åšèŠ‚æµï¼Œä¸å½±å“æˆ˜æ–—åŠ¨ä½œ
-    if ((ui_frame_skip++ & 1) == 0) {
-      AdvanceVerts(count, vertex_size);
-      break;
-    }
-  }
-
-  // =========================================================
-  // ðŸš€ 5. æ­£å¸¸æŽ¨è¿›ï¼ˆä¸å†åšé‡è®¡ç®—ï¼‰
-  // =========================================================
-  AdvanceVerts(count, vertex_size);
-  break;
-}
-       
-  int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
-  int pos_size = possize[pos] / 3;
-
-  u8 *vptr = (u8 *)base_addr;
-
-  // =========================================================
-  // ðŸš€ ðŸš€ ðŸš€ æ ¸å¿ƒä¼˜åŒ–è·¯å¾„ï¼ˆå•å±‚å¾ªçŽ¯ + branchless + è¿žç»­å†…å­˜ï¼‰
-  // =========================================================
-
-  if (pos_size == 2) {
-    // ===== short è·¯å¾„ï¼ˆä¸»åŠ›è·¯å¾„ï¼‰=====
-    for (int i = 0; i < vertCount; i++) {
-
-      short *vx = (short *)(vptr + pos_off);
-      short *vy = (short *)(vptr + pos_off + 2);
-
-      short x = *vx;
-      short y = *vy;
-
-      // ===== branchless x =====
-      int x_is_special = (x == 480) | (x == 960);
-      int x_in_range   = (x > -1024) & (x < 1024);
-      int x_scaled     = x << 1;
-
-      x = x_is_special ? 960 : (x_in_range ? x_scaled : x);
-
-      // ===== branchless y =====
-      int y_is_special = (y == 272) | (y == 544);
-      int y_in_range   = (y > -1024) & (y < 1024);
-      int y_scaled     = y << 1;
-
-      y = y_is_special ? 544 : (y_in_range ? y_scaled : y);
-
-      *vx = x;
-      *vy = y;
-
-      vptr += vertex_size;
-    }
-
-  } else if (pos_size == 4) {
-    // ===== float è·¯å¾„ï¼ˆä¿å®ˆä¼˜åŒ–ç‰ˆï¼‰=====
-    for (int i = 0; i < vertCount; i++) {
-
-      float *vx = (float *)(vptr + pos_off);
-      float *vy = (float *)(vptr + pos_off + 4);
-
-      float x = *vx;
-      float y = *vy;
-
-      if (x != 0.0f) {
-        if (x == 480.0f || x == 960.0f) x = 960.0f;
-        else if (x > -1024.0f && x < 1024.0f) x = x * 2.0f;
-      }
-
-      if (y != 0.0f) {
-        if (y == 272.0f || y == 544.0f) y = 544.0f;
-        else if (y > -1024.0f && y < 1024.0f) y = y * 2.0f;
-      }
-
-      *vx = x;
-      *vy = y;
-
-      vptr += vertex_size;
-    }
-  }
-
-  // ðŸš€ 5. æŽ¨è¿›é¡¶ç‚¹æŒ‡é’ˆ
-  AdvanceVerts(count, vertex_size);
-
-  break;
-}
-  
-  int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
-  int pos_size = possize[pos] / 3;
-
-  u32 vertex_addr = state.vertex_addr;
-
-  for (int i = lower; i < upper; i++, vertex_addr += vertex_size) {
-
-    for (int j = 0; j < 2; j++) {
-
-      u32 addr = vertex_addr + pos_off + j * pos_size;
-
-      if (pos_size == 2) {
-        short *v = (short *)addr;
-
-        if (*v != 0) {
-          if (*v == 480 || *v == 960)
-            *v = 960;
           else if (*v == 272 || *v == 544)
             *v = 544;
           else if (*v > -1024 && *v < 1024)
