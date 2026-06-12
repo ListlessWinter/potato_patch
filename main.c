@@ -1,5 +1,4 @@
-#include <pspsdk.h>
-
+﻿#include <pspsdk.h>
 void copyFrameBuffer(void);
 #include <pspkernel.h>
 #include <pspge.h>
@@ -525,31 +524,94 @@ void patchGeList(u32 *list, u32 *stall) {
         break;
       }
 
-          else if (*v == 272 || *v == 544)
-            *v = 544;
-          else if (*v > -1024 && *v < 1024)
-            *v <<= 1;   // ðŸš€ æ¯” *2 æ›´å¿«
+      case GE_CMD_PRIM:
+      {
+        state.has_draws = 1;
+
+        if (state.ignore_framebuf || (state.ignore_texture && state.ge_cmds[GE_CMD_TEXTUREMAPENABLE])) {
+          *list = 0;
+          break;
         }
 
-      } else if (pos_size == 4) {
-        float *f = (float *)addr;
+        u16 count = data & 0xffff;
 
-        if (*f != 0.0f) {
-          if (*f == 480.0f || *f == 960.0f)
-            *f = 960.0f;
-          else if (*f == 272.0f || *f == 544.0f)
-            *f = 544.0f;
-          else if (*f > -1024.0f && *f < 1024.0f)
-            *f *= 2.0f;
+        if ((state.vertex_type & GE_VTYPE_THROUGH_MASK) != GE_VTYPE_THROUGH) {
+          AdvanceVerts(count, 0);
+          break;
         }
+
+        u8 vertex_size = 0, pos_off = 0, visit_off = 0;
+        getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
+
+        u16 lower = 0;
+        u16 upper = count;
+
+        if ((state.vertex_type & GE_VTYPE_IDX_MASK) != GE_VTYPE_IDX_NONE) {
+          GetIndexBounds((void *)state.index_addr, count, state.vertex_type, &lower, &upper);
+          upper += 1;
+        }
+
+        int vertCount = upper - lower;
+        u32 base_addr = state.vertex_addr + lower * vertex_size;
+
+        int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
+        int pos_size = possize[pos] / 3;
+
+        u8 *vptr = (u8 *)base_addr;
+
+        if (pos_size == 2) {
+          for (int i = 0; i < vertCount; i++) {
+            short *vx = (short *)(vptr + pos_off);
+            short *vy = (short *)(vptr + pos_off + 2);
+
+            short x = *vx;
+            short y = *vy;
+
+            int x_is_special = (x == 480) | (x == 960);
+            int x_in_range   = (x > -1024) & (x < 1024);
+            int x_scaled     = x << 1;
+
+            x = x_is_special ? 960 : (x_in_range ? x_scaled : x);
+
+            int y_is_special = (y == 272) | (y == 544);
+            int y_in_range   = (y > -1024) & (y < 1024);
+            int y_scaled     = y << 1;
+
+            y = y_is_special ? 544 : (y_in_range ? y_scaled : y);
+
+            *vx = x;
+            *vy = y;
+
+            vptr += vertex_size;
+          }
+        } else if (pos_size == 4) {
+          for (int i = 0; i < vertCount; i++) {
+            float *vx = (float *)(vptr + pos_off);
+            float *vy = (float *)(vptr + pos_off + 4);
+
+            float x = *vx;
+            float y = *vy;
+
+            if (x != 0.0f) {
+              if (x == 480.0f || x == 960.0f) x = 960.0f;
+              else if (x > -1024.0f && x < 1024.0f) x = x * 2.0f;
+            }
+
+            if (y != 0.0f) {
+              if (y == 272.0f || y == 544.0f) y = 544.0f;
+              else if (y > -1024.0f && y < 1024.0f) y = y * 2.0f;
+            }
+
+            *vx = x;
+            *vy = y;
+
+            vptr += vertex_size;
+          }
+        }
+
+        AdvanceVerts(count, vertex_size);
+        break;
       }
-    }
-  }
-
-  AdvanceVerts(count, vertex_size);
-  break;
-}
-
       case GE_CMD_FRAMEBUFPIXFORMAT:
         *list = (cmd << 24) | PIXELFORMAT;
         break;
@@ -718,6 +780,8 @@ void patchGeList(u32 *list, u32 *stall) {
         break;
     }
 
+    }
+  }
 void *(* _sceGeEdramGetAddr)(void);
 unsigned int *(* _sceGeEdramGetSize)(void);
 int (* _sceGeGetList)(int qid, void *list, int *flag);
