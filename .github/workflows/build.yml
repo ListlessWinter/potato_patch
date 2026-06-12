@@ -16,13 +16,9 @@ jobs:
       
       - name: Build PRX
         run: |
-          psp-objdump -d original.prx > dump.txt 2>&1 || true
-          git config --global --add safe.directory '*'
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git add dump.txt
-          git commit -m 'upload PRX dump' || true
-          git push || true
+          make clean || true
+          make > build.log 2>&1 || (git config --global --add safe.directory '*' && git config --global user.name 'github-actions' && git config --global user.email 'github-actions@github.com' && git add build.log && git commit -m 'upload build log' && git push && exit 1)
+          ls -la ge_mh_patch.prx
       
       - name: Upload PRX
         uses: actions/upload-artifact@v4
