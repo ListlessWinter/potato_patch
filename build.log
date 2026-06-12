@@ -3,182 +3,30 @@ main.c: In function 'tryFrameCopy':
 main.c:255:3: error: implicit declaration of function 'copyFrameBuffer' [-Wimplicit-function-declaration]
   255 |   copyFrameBuffer();
       |   ^~~~~~~~~~~~~~~
-main.c: In function 'patchGeList':
-main.c:595:20: error: 'base_addr' undeclared (first use in this function)
-  595 |   u8 *vptr = (u8 *)base_addr;
-      |                    ^~~~~~~~~
-main.c:595:20: note: each undeclared identifier is reported only once for each function it appears in
-main.c:603:25: error: 'vertCount' undeclared (first use in this function)
-  603 |     for (int i = 0; i < vertCount; i++) {
-      |                         ^~~~~~~~~
-main.c:605:36: error: 'pos_off' undeclared (first use in this function)
-  605 |       short *vx = (short *)(vptr + pos_off);
-      |                                    ^~~~~~~
-main.c:628:15: error: 'vertex_size' undeclared (first use in this function)
-  628 |       vptr += vertex_size;
-      |               ^~~~~~~~~~~
-main.c:659:16: error: 'count' undeclared (first use in this function)
-  659 |   AdvanceVerts(count, vertex_size);
-      |                ^~~~~
-main.c:669:16: error: 'lower' undeclared (first use in this function)
-  669 |   for (int i = lower; i < upper; i++, vertex_addr += vertex_size) {
-      |                ^~~~~
-main.c:669:27: error: 'upper' undeclared (first use in this function)
-  669 |   for (int i = lower; i < upper; i++, vertex_addr += vertex_size) {
-      |                           ^~~~~
-main.c:706:7: error: case label not within a switch statement
-  706 |       case GE_CMD_FRAMEBUFPIXFORMAT:
-      |       ^~~~
-main.c:707:18: error: 'cmd' undeclared (first use in this function)
-  707 |         *list = (cmd << 24) | PIXELFORMAT;
-      |                  ^~~
-main.c:708:9: error: break statement not within loop or switch
-  708 |         break;
-      |         ^~~~~
-main.c:710:7: error: case label not within a switch statement
-  710 |       case GE_CMD_FRAMEBUFPTR:
-      |       ^~~~
-main.c:711:7: error: case label not within a switch statement
-  711 |       case GE_CMD_FRAMEBUFWIDTH:
-      |       ^~~~
-main.c:715:31: error: 'op' undeclared (first use in this function); did you mean 'pop'?
-  715 |           state.framebufptr = op;
-      |                               ^~
-      |                               pop
-main.c:779:9: error: break statement not within loop or switch
-  779 |         break;
-      |         ^~~~~
-main.c:782:7: error: case label not within a switch statement
-  782 |       case GE_CMD_ZBUFPTR:
-      |       ^~~~
-main.c:784:9: error: break statement not within loop or switch
-  784 |         break;
-      |         ^~~~~
-main.c:786:7: error: case label not within a switch statement
-  786 |       case GE_CMD_ZBUFWIDTH:
-      |       ^~~~
-main.c:788:9: error: break statement not within loop or switch
-  788 |         break;
-      |         ^~~~~
-main.c:790:7: error: case label not within a switch statement
-  790 |       case GE_CMD_TEXADDR0:
-      |       ^~~~
-main.c:791:7: error: case label not within a switch statement
-  791 |       case GE_CMD_TEXADDR1:
-      |       ^~~~
-main.c:792:7: error: case label not within a switch statement
-  792 |       case GE_CMD_TEXADDR2:
-      |       ^~~~
-main.c:793:7: error: case label not within a switch statement
-  793 |       case GE_CMD_TEXADDR3:
-      |       ^~~~
-main.c:794:7: error: case label not within a switch statement
-  794 |       case GE_CMD_TEXADDR4:
-      |       ^~~~
-main.c:795:7: error: case label not within a switch statement
-  795 |       case GE_CMD_TEXADDR5:
-      |       ^~~~
-main.c:796:7: error: case label not within a switch statement
-  796 |       case GE_CMD_TEXADDR6:
-      |       ^~~~
-main.c:797:7: error: case label not within a switch statement
-  797 |       case GE_CMD_TEXADDR7:
-      |       ^~~~
-main.c:798:7: error: case label not within a switch statement
-  798 |       case GE_CMD_TEXBUFWIDTH0:
-      |       ^~~~
-main.c:799:7: error: case label not within a switch statement
-  799 |       case GE_CMD_TEXBUFWIDTH1:
-      |       ^~~~
-main.c:800:7: error: case label not within a switch statement
-  800 |       case GE_CMD_TEXBUFWIDTH2:
-      |       ^~~~
-main.c:801:7: error: case label not within a switch statement
-  801 |       case GE_CMD_TEXBUFWIDTH3:
-      |       ^~~~
-main.c:802:7: error: case label not within a switch statement
-  802 |       case GE_CMD_TEXBUFWIDTH4:
-      |       ^~~~
-main.c:803:7: error: case label not within a switch statement
-  803 |       case GE_CMD_TEXBUFWIDTH5:
-      |       ^~~~
-main.c:804:7: error: case label not within a switch statement
-  804 |       case GE_CMD_TEXBUFWIDTH6:
-      |       ^~~~
-main.c:805:7: error: case label not within a switch statement
-  805 |       case GE_CMD_TEXBUFWIDTH7:
-      |       ^~~~
-main.c:829:9: error: break statement not within loop or switch
-  829 |         break;
-      |         ^~~~~
-main.c:832:7: error: case label not within a switch statement
-  832 |       case GE_CMD_VIEWPORTXSCALE:
-      |       ^~~~
-main.c:833:15: error: 'data' undeclared (first use in this function)
-  833 |         t.i = data << 8;
-      |               ^~~~
-main.c:836:9: error: break statement not within loop or switch
-  836 |         break;
-      |         ^~~~~
-main.c:838:7: error: case label not within a switch statement
-  838 |       case GE_CMD_VIEWPORTYSCALE:
-      |       ^~~~
-main.c:842:9: error: break statement not within loop or switch
-  842 |         break;
-      |         ^~~~~
-main.c:844:7: error: case label not within a switch statement
-  844 |       case GE_CMD_VIEWPORTXCENTER:
-      |       ^~~~
-main.c:847:9: error: break statement not within loop or switch
-  847 |         break;
-      |         ^~~~~
-main.c:849:7: error: case label not within a switch statement
-  849 |       case GE_CMD_VIEWPORTYCENTER:
-      |       ^~~~
-main.c:852:9: error: break statement not within loop or switch
-  852 |         break;
-      |         ^~~~~
-main.c:854:7: error: case label not within a switch statement
-  854 |       case GE_CMD_OFFSETX:
-      |       ^~~~
-main.c:856:9: error: break statement not within loop or switch
-  856 |         break;
-      |         ^~~~~
-main.c:858:7: error: case label not within a switch statement
-  858 |       case GE_CMD_OFFSETY:
-      |       ^~~~
-main.c:860:9: error: break statement not within loop or switch
-  860 |         break;
-      |         ^~~~~
-main.c:862:7: error: case label not within a switch statement
-  862 |       case GE_CMD_REGION2:
-      |       ^~~~
-main.c:863:7: error: case label not within a switch statement
-  863 |       case GE_CMD_SCISSOR2:
-      |       ^~~~
-main.c:865:9: error: break statement not within loop or switch
-  865 |         break;
-      |         ^~~~~
-main.c:867:7: error: 'default' label not within a switch statement
-  867 |       default:
-      |       ^~~~~~~
-main.c:871:9: error: break statement not within loop or switch
-  871 |         break;
-      |         ^~~~~
 main.c: In function 'sceGeListUpdateStallAddrPatched':
-main.c:915:9: warning: unused variable 's' [-Wunused-variable]
-  915 |     u32 s = (u32)stall & 0x0FFFFFFF;
+main.c:802:9: warning: unused variable 's' [-Wunused-variable]
+  802 |     u32 s = (u32)stall & 0x0FFFFFFF;
       |         ^
-main.c:914:9: warning: unused variable 'p' [-Wunused-variable]
-  914 |     u32 p = (u32)prev & 0x0FFFFFFF;
+main.c:801:9: warning: unused variable 'p' [-Wunused-variable]
+  801 |     u32 p = (u32)prev & 0x0FFFFFFF;
       |         ^
+main.c: In function 'patchGeList':
+main.c:956:1: error: expected declaration or statement at end of input
+  956 | }
+      | ^
+main.c:763:8: warning: variable '_sceGeGetList' set but not used [-Wunused-but-set-variable]
+  763 | int (* _sceGeGetList)(int qid, void *list, int *flag);
+      |        ^~~~~~~~~~~~~
+main.c:956:1: error: expected declaration or statement at end of input
+  956 | }
+      | ^
 main.c: At top level:
-main.c:973:6: warning: conflicting types for 'copyFrameBuffer'; have 'void(void)'
-  973 | void copyFrameBuffer()
-      |      ^~~~~~~~~~~~~~~
-main.c:255:3: note: previous implicit declaration of 'copyFrameBuffer' with type 'void(void)'
-  255 |   copyFrameBuffer();
-      |   ^~~~~~~~~~~~~~~
+main.c:927:5: warning: 'module_start' defined but not used [-Wunused-function]
+  927 | int module_start(SceSize args, void *argp) {
+      |     ^~~~~~~~~~~~
+main.c:855:5: warning: 'sceGeListSyncPatched' defined but not used [-Wunused-function]
+  855 | int sceGeListSyncPatched(int qid, int syncType) {
+      |     ^~~~~~~~~~~~~~~~~~~~
 main.c:236:12: warning: 'skip' defined but not used [-Wunused-variable]
   236 | static int skip = 0;//τº╗σè¿ΘÇƒσ║ªσèáΘÇƒ∩╝îΘÖìΣ╜ÄΦ░âτö¿apiΘóæτÄç
       |            ^~~~
