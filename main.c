@@ -12,8 +12,6 @@
 
 PSP_MODULE_INFO("GePatch", 0x1007, 1, 0);
 
-void copyFrameBuffer(void);
-
 #define DRAW_NATIVE 0xABCDEF00
 
 #define PITCH 960
@@ -29,7 +27,7 @@ void copyFrameBuffer(void);
 #define VRAM_DRAW_BUFFER_OFFSET 0x04000000
 #define VRAM_DEPTH_BUFFER_OFFSET 0x04100000
 #define VRAM_1KB 0x041ff000
-#define VERTEX_CACHE_SIZE 512//æ”¹ä¸€ä¸‹ç¼“å­˜å¤§å°
+#define VERTEX_CACHE_SIZE 512//µö╣Σ╕ÇΣ╕ïτ╝ôσ¡ÿσñºσ░Å
 #define log(...)
 
 // void logmsg(char *msg) {
@@ -181,7 +179,7 @@ typedef struct {
   u32 addr;
   u32 type;
   u16 count;
-} VertexCacheEntry;//ç¼“å­˜
+} VertexCacheEntry;//τ╝ôσ¡ÿ
 
 typedef struct {
   u32 ge_cmds[0x100];
@@ -212,8 +210,8 @@ typedef struct {
   u32 framebuf_addr[16];
   u32 framebuf_count;
 
-  u32 last_vertex_addr;//ç¼“å­˜
-  u32 last_vertex_count;//ç¼“å­˜
+  u32 last_vertex_addr;//τ╝ôσ¡ÿ
+  u32 last_vertex_count;//τ╝ôσ¡ÿ
 
   VertexCacheEntry vcache[VERTEX_CACHE_SIZE];
   u32 vcache_pos;
@@ -224,7 +222,7 @@ static GeState state;
 static int rendered_in_sync = 0;
 static int framebuf_set = 0;
 
-static u32 last_list = 0;//æ–°å¢žåŠ çŠ¶æ€
+static u32 last_list = 0;//µû░σó₧σèáτè╢µÇü
 
 static int fb_dirty = 1;//FrameBuf
 static void *last_fb = NULL;//FrameBuf
@@ -233,9 +231,9 @@ static void *last_fb = NULL;//FrameBuf
 
 static int fb_pending = 0;
 static int fb_last_vsync = 0;
-static int fb_copy_lock = 0;//èŠ‚æ‹å™¨
+static int fb_copy_lock = 0;//ΦèéµïìσÖ¿
 
-static int skip = 0;//ç§»åŠ¨é€Ÿåº¦åŠ é€Ÿï¼Œé™ä½Žè°ƒç”¨apié¢‘çŽ‡
+static int skip = 0;//τº╗σè¿ΘÇƒσ║ªσèáΘÇƒ∩╝îΘÖìΣ╜ÄΦ░âτö¿apiΘóæτÄç
 
 
 static int dirty_x = 0;
@@ -243,7 +241,24 @@ static int dirty_y = 0;
 static int dirty_w = WIDTH;
 static int dirty_h = HEIGHT;
 
+static inline void tryFrameCopy()
+{
+  if (!fb_pending)
+    return;
 
+  if (fb_copy_lock)
+    return;
+
+  fb_copy_lock = 1;
+
+  // ≡ƒæë σ╝║σê╢ΓÇ£µ»Åσ╕ºµ£ÇσñÜΣ╕Çµ¼íΓÇ¥
+  copyFrameBuffer();
+
+  fb_dirty = 0;
+  fb_pending = 0;
+
+  fb_copy_lock = 0;
+}
 
 static inline int checkVertexCache(u32 addr, u32 type, u16 count) {
   u32 hash = (addr >> 4) ^ type ^ count;
@@ -252,18 +267,18 @@ static inline int checkVertexCache(u32 addr, u32 type, u16 count) {
   VertexCacheEntry *e = &state.vcache[idx];
 
   if (e->addr == addr && e->type == type && e->count == count) {
-    return 1; // å‘½ä¸­
+    return 1; // σæ╜Σ╕¡
   }
 
-  // å†™å…¥ï¼ˆè¦†ç›–å¼ï¼‰
+  // σåÖσàÑ∩╝êΦªåτ¢ûσ╝Å∩╝ë
   e->addr = addr;
   e->type = type;
   e->count = count;
 
   return 0;
 }
-extern u32 last_list; //æ–°åŠ å‚æ•°1
-extern int was_paused;//æ–°åŠ å‚æ•°2
+extern u32 last_list; //µû░σèáσÅéµò░1
+extern int was_paused;//µû░σèáσÅéµò░2
 
 void resetGeState() {
   memset(&state, 0, sizeof(GeState));
@@ -508,12 +523,12 @@ void patchGeList(u32 *list, u32 *stall) {
         break;
       }
 
-     case GE_CMD_PRIM://é¡¶ç‚¹ä¼˜åŒ–
+     case GE_CMD_PRIM://Θí╢τé╣Σ╝ÿσîû
 {
   u16 count = data & 0xffff;
 
   // =========================================================
-  // ðŸš€ 0. THROUGH å¿«é€Ÿè¿‡æ»¤ï¼ˆå¿…é¡»æœ€å‰ï¼‰
+  // ≡ƒÜÇ 0. THROUGH σ┐½ΘÇƒΦ┐çµ╗ñ∩╝êσ┐àΘí╗µ£Çσëì∩╝ë
   // =========================================================
   if ((state.vertex_type & GE_VTYPE_THROUGH_MASK) != GE_VTYPE_THROUGH) {
     AdvanceVerts(count, 0);
@@ -521,7 +536,7 @@ void patchGeList(u32 *list, u32 *stall) {
   }
 
   // =========================================================
-  // ðŸš€ 1. é¡¶ç‚¹ä¿¡æ¯è§£æž
+  // ≡ƒÜÇ 1. Θí╢τé╣Σ┐íµü»Φºúµ₧É
   // =========================================================
   u8 vertex_size = 0, pos_off = 0, visit_off = 0;
   getVertexInfo(state.vertex_type, &vertex_size, &pos_off, &visit_off);
@@ -537,7 +552,7 @@ void patchGeList(u32 *list, u32 *stall) {
   int vertCount = upper - lower;
 
   // =========================================================
-  // ðŸš€ 2. å¤§è§„æ¨¡ç›´æŽ¥è·³è¿‡ï¼ˆåœ°å½¢/è‰/è¿œæ™¯ï¼‰
+  // ≡ƒÜÇ 2. σñºΦºäµ¿íτ¢┤µÄÑΦ╖│Φ┐ç∩╝êσ£░σ╜ó/Φìë/Φ┐£µÖ»∩╝ë
   // =========================================================
   if (vertCount > 1024) {
     AdvanceVerts(count, vertex_size);
@@ -545,7 +560,7 @@ void patchGeList(u32 *list, u32 *stall) {
   }
 
   // =========================================================
-  // ðŸš€ 3. é¡¶ç‚¹ç¼“å­˜ï¼ˆæ ¸å¿ƒï¼šè·¨å¸§è·³è¿‡ CPUï¼‰
+  // ≡ƒÜÇ 3. Θí╢τé╣τ╝ôσ¡ÿ∩╝êµá╕σ┐â∩╝ÜΦ╖¿σ╕ºΦ╖│Φ┐ç CPU∩╝ë
   // =========================================================
   u32 base_addr = state.vertex_addr + lower * vertex_size;
 
@@ -555,12 +570,12 @@ void patchGeList(u32 *list, u32 *stall) {
   }
 
   // =========================================================
-  // ðŸš€ 4. å°æ‰¹æ¬¡ä¼˜åŒ–ï¼ˆUI / æŽ‰å¸§å…³é”®æ¥æºï¼‰
+  // ≡ƒÜÇ 4. σ░Åµë╣µ¼íΣ╝ÿσîû∩╝êUI / µÄëσ╕ºσà│Θö«µ¥Ñµ║É∩╝ë
   // =========================================================
   if (count < 200) {
     static u32 ui_frame_skip = 0;
 
-    // âš ï¸ åªå¯¹ UI åšèŠ‚æµï¼Œä¸å½±å“æˆ˜æ–—åŠ¨ä½œ
+    // ΓÜá∩╕Å σÅ¬σ»╣ UI σüÜΦèéµ╡ü∩╝îΣ╕ìσ╜▒σôìµêÿµûùσè¿Σ╜£
     if ((ui_frame_skip++ & 1) == 0) {
       AdvanceVerts(count, vertex_size);
       break;
@@ -568,21 +583,23 @@ void patchGeList(u32 *list, u32 *stall) {
   }
 
   // =========================================================
-  // 🚀 5. 正常推进（不再做重计算）
+  // ≡ƒÜÇ 5. µ¡úσ╕╕µÄ¿Φ┐¢∩╝êΣ╕ìσåìσüÜΘçìΦ«íτ«ù∩╝ë
   // =========================================================
-  // (We actually DO want to calculate vertices now!)
-
+  AdvanceVerts(count, vertex_size);
+  break;
+}
+       
   int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
   int pos_size = possize[pos] / 3;
 
   u8 *vptr = (u8 *)base_addr;
 
   // =========================================================
-  // ðŸš€ ðŸš€ ðŸš€ æ ¸å¿ƒä¼˜åŒ–è·¯å¾„ï¼ˆå•å±‚å¾ªçŽ¯ + branchless + è¿žç»­å†…å­˜ï¼‰
+  // ≡ƒÜÇ ≡ƒÜÇ ≡ƒÜÇ µá╕σ┐âΣ╝ÿσîûΦ╖»σ╛ä∩╝êσìòσ▒éσ╛¬τÄ» + branchless + Φ┐₧τ╗¡σåàσ¡ÿ∩╝ë
   // =========================================================
 
   if (pos_size == 2) {
-    // ===== short è·¯å¾„ï¼ˆä¸»åŠ›è·¯å¾„ï¼‰=====
+    // ===== short Φ╖»σ╛ä∩╝êΣ╕╗σè¢Φ╖»σ╛ä∩╝ë=====
     for (int i = 0; i < vertCount; i++) {
 
       short *vx = (short *)(vptr + pos_off);
@@ -612,7 +629,7 @@ void patchGeList(u32 *list, u32 *stall) {
     }
 
   } else if (pos_size == 4) {
-    // ===== float è·¯å¾„ï¼ˆä¿å®ˆä¼˜åŒ–ç‰ˆï¼‰=====
+    // ===== float Φ╖»σ╛ä∩╝êΣ┐¥σ«êΣ╝ÿσîûτëê∩╝ë=====
     for (int i = 0; i < vertCount; i++) {
 
       float *vx = (float *)(vptr + pos_off);
@@ -638,9 +655,51 @@ void patchGeList(u32 *list, u32 *stall) {
     }
   }
 
-  // ðŸš€ 5. æŽ¨è¿›é¡¶ç‚¹æŒ‡é’ˆ
+  // ≡ƒÜÇ 5. µÄ¿Φ┐¢Θí╢τé╣µîçΘÆê
   AdvanceVerts(count, vertex_size);
 
+  break;
+}
+  
+  int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
+  int pos_size = possize[pos] / 3;
+
+  u32 vertex_addr = state.vertex_addr;
+
+  for (int i = lower; i < upper; i++, vertex_addr += vertex_size) {
+
+    for (int j = 0; j < 2; j++) {
+
+      u32 addr = vertex_addr + pos_off + j * pos_size;
+
+      if (pos_size == 2) {
+        short *v = (short *)addr;
+
+        if (*v != 0) {
+          if (*v == 480 || *v == 960)
+            *v = 960;
+          else if (*v == 272 || *v == 544)
+            *v = 544;
+          else if (*v > -1024 && *v < 1024)
+            *v <<= 1;   // ≡ƒÜÇ µ»ö *2 µ¢┤σ┐½
+        }
+
+      } else if (pos_size == 4) {
+        float *f = (float *)addr;
+
+        if (*f != 0.0f) {
+          if (*f == 480.0f || *f == 960.0f)
+            *f = 960.0f;
+          else if (*f == 272.0f || *f == 544.0f)
+            *f = 544.0f;
+          else if (*f > -1024.0f && *f < 1024.0f)
+            *f *= 2.0f;
+        }
+      }
+    }
+  }
+
+  AdvanceVerts(count, vertex_size);
   break;
 }
 
@@ -661,7 +720,7 @@ void patchGeList(u32 *list, u32 *stall) {
         }
       
         // =========================================================
-        // ðŸ‘‰ ç­‰ ptr + width éƒ½åˆ°é½
+        // ≡ƒæë τ¡ë ptr + width Θâ╜σê░Θ╜É
         // =========================================================
         if (state.framebufptr && state.framebufwidth) {
       
@@ -669,12 +728,12 @@ void patchGeList(u32 *list, u32 *stall) {
           u32 pitch = state.framebufwidth & 0xffff;
       
           // =========================================================
-          // ðŸš€ åˆ†ç±» framebuffer ç±»åž‹ï¼ˆåªåˆ†ç±»ï¼Œä¸èŠ‚æµï¼‰
+          // ≡ƒÜÇ σêåτ▒╗ framebuffer τ▒╗σ₧ï∩╝êσÅ¬σêåτ▒╗∩╝îΣ╕ìΦèéµ╡ü∩╝ë
           // =========================================================
       
           if (pitch == 512 || pitch == 480) {
       
-            // ðŸ‘‰ UI / å°buffer
+            // ≡ƒæë UI / σ░Åbuffer
             fb_dirty = 1;
       
             dirty_x = 0;
@@ -685,7 +744,7 @@ void patchGeList(u32 *list, u32 *stall) {
           }
           else if (pitch == 960) {
       
-            // ðŸ‘‰ ä¸»åœºæ™¯ framebufferï¼ˆæ°¸è¿œæ ‡è®° dirtyï¼‰
+            // ≡ƒæë Σ╕╗σ£║µÖ» framebuffer∩╝êµ░╕Φ┐£µáçΦ«░ dirty∩╝ë
             fb_dirty = 1;
       
             dirty_x = 0;
@@ -696,13 +755,13 @@ void patchGeList(u32 *list, u32 *stall) {
           }
           else {
       
-            // ðŸ‘‰ éžæ ‡å‡† bufferï¼šå¿½ç•¥
+            // ≡ƒæë Θ¥₧µáçσçå buffer∩╝Üσ┐╜τòÑ
             state.ignore_framebuf = 1;
             fb_dirty = 0;
           }
       
           // =========================================================
-          // ðŸ‘‰ æ˜¯å¦å…è®¸å¤„ç† framebuffer
+          // ≡ƒæë µÿ»σÉªσàüΦ«╕σñäτÉå framebuffer
           // =========================================================
       
           if (pitch == 512 || pitch == 480 || pitch == 960) {
@@ -812,10 +871,6 @@ void patchGeList(u32 *list, u32 *stall) {
         break;
     }
 
-    list++;
-  }
-}
-
 void *(* _sceGeEdramGetAddr)(void);
 unsigned int *(* _sceGeEdramGetSize)(void);
 int (* _sceGeGetList)(int qid, void *list, int *flag);
@@ -835,45 +890,45 @@ unsigned int sceGeEdramGetSizePatched(void) {
   return 4 * 1024 * 1024;
 }
 
-int sceGeListUpdateStallAddrPatched(int qid, void *stall)//å…³é”®å˜åŒ– â†’ å¿…æ‰§è¡Œï¼Œè§£å†³50%è°ƒç”¨è¢«éšæœºä¸¢å¼ƒçš„é—®é¢˜ï¼ŒåŽŸæ¥å‡½æ•°å¤ªç®€å•
+int sceGeListUpdateStallAddrPatched(int qid, void *stall)//σà│Θö«σÅÿσîû ΓåÆ σ┐àµëºΦíî∩╝îΦºúσå│50%Φ░âτö¿Φó½ΘÜÅµ£║Σ╕óσ╝âτÜäΘù«Θóÿ∩╝îσÄƒµ¥Ñσç╜µò░σñ¬τ«Çσìò
 {
   int k1 = pspSdkSetK1(0);
 
-  // ðŸ‘‰ ç”¨ qid åšç´¢å¼•ï¼ˆPSP GE list æ•°é‡ä¸å¤§ï¼‰
+  // ≡ƒæë τö¿ qid σüÜτ┤óσ╝ò∩╝êPSP GE list µò░ΘçÅΣ╕ìσñº∩╝ë
   static void *last_stall[128] = {0};
 
   void *prev = last_stall[qid];
 
   // =========================================================
-  // ðŸš€ 1. å®Œå…¨é‡å¤ â†’ ç›´æŽ¥è·³è¿‡ï¼ˆæœ€é«˜æ”¶ç›Šï¼‰
+  // ≡ƒÜÇ 1. σ«îσà¿Θçìσñì ΓåÆ τ¢┤µÄÑΦ╖│Φ┐ç∩╝êµ£ÇΘ½ÿµö╢τ¢è∩╝ë
   // =========================================================
   if (prev == stall) {
     pspSdkSetK1(k1);
-    return 0; // ä¸è°ƒç”¨åº•å±‚
+    return 0; // Σ╕ìΦ░âτö¿σ║òσ▒é
   }
 
   // =========================================================
-  // ðŸš€ 2. å°å¹…å˜åŒ– â†’ åˆå¹¶ï¼ˆæ ¸å¿ƒä¼˜åŒ–ï¼‰
+  // ≡ƒÜÇ 2. σ░Åσ╣àσÅÿσîû ΓåÆ σÉêσ╣╢∩╝êµá╕σ┐âΣ╝ÿσîû∩╝ë
   // =========================================================
   if (prev != NULL) {
     u32 p = (u32)prev & 0x0FFFFFFF;
     u32 s = (u32)stall & 0x0FFFFFFF;
 
-    // ðŸ‘‰ å·®è·å¤ªå°ï¼ˆä¾‹å¦‚ < 64 å­—èŠ‚ï¼‰ï¼Œè®¤ä¸ºæ˜¯â€œæŠ–åŠ¨æ›´æ–°â€
-    // if ((u32)(s - p) <128) {//ä¿®æ”¹
-      // ä¸æ›´æ–°ï¼Œç­‰æ›´å¤§çš„æŽ¨è¿›
+    // ≡ƒæë σ╖«Φ╖¥σñ¬σ░Å∩╝êΣ╛ïσªé < 64 σ¡ùΦèé∩╝ë∩╝îΦ«ñΣ╕║µÿ»ΓÇ£µèûσè¿µ¢┤µû░ΓÇ¥
+    // if ((u32)(s - p) <128) {//Σ┐«µö╣
+      // Σ╕ìµ¢┤µû░∩╝îτ¡ëµ¢┤σñºτÜäµÄ¿Φ┐¢
       pspSdkSetK1(k1);
       return 0;
     // }
   }
 
   // =========================================================
-  // ðŸš€ 3. è®°å½•æ–°çŠ¶æ€
+  // ≡ƒÜÇ 3. Φ«░σ╜òµû░τè╢µÇü
   // =========================================================
   last_stall[qid] = stall;
 
   // =========================================================
-  // ðŸš€ 4. è°ƒç”¨åŽŸå‡½æ•°ï¼ˆå¿…é¡»ï¼ï¼‰
+  // ≡ƒÜÇ 4. Φ░âτö¿σÄƒσç╜µò░∩╝êσ┐àΘí╗∩╝ü∩╝ë
   // =========================================================
   int res = _sceGeListUpdateStallAddr(qid, stall);
 
@@ -882,11 +937,10 @@ int sceGeListUpdateStallAddrPatched(int qid, void *stall)//å…³é”®å˜�
 }
 
 
-int sceGeListEnQueuePatched(const void *list, void *stall, int cbid, PspGeListArgs *arg) {//A݃??A1AA"3
-  copyFrameBuffer();
+int sceGeListEnQueuePatched(const void *list, void *stall, int cbid, PspGeListArgs *arg) {//µö╣σè¿3
   u32 list_addr = (u32)list & 0x0fffffff;
 
-  // ✅ 1. 避免重复 patch 同一个 list
+  // Γ£à 1. Θü┐σàìΘçìσñì patch σÉîΣ╕ÇΣ╕¬ list
   if (list_addr != last_list) {
     resetGeState();
 
@@ -895,7 +949,7 @@ int sceGeListEnQueuePatched(const void *list, void *stall, int cbid, PspGeListAr
       (u32 *)((u32)stall & 0x0fffffff)
     );
 
-    // âœ… 2. åªåœ¨çœŸæ­£ä¿®æ”¹æ—¶åˆ·æ–° cacheï¼ˆå…ˆç®€åŒ–ä¸ºå±€éƒ¨ï¼‰
+    // Γ£à 2. σÅ¬σ£¿τ£ƒµ¡úΣ┐«µö╣µù╢σê╖µû░ cache∩╝êσàêτ«ÇσîûΣ╕║σ▒ÇΘâ¿∩╝ë
    sceKernelDcacheWritebackInvalidateAll();
 
     last_list = list_addr;
@@ -912,19 +966,18 @@ int sceGeListEnQueueHeadPatched(const void *list, void *stall, int cbid, PspGeLi
 }
 
 int sceGeListSyncPatched(int qid, int syncType) {
-  
+  tryFrameCopy();
   return _sceGeListSync(qid, syncType);
 }
-
-
-
 
 void copyFrameBuffer()
 {
   if (!fb_dirty)
     return;
 
-  sceGuStart(0, (void *)(RENDER_LIST | 0xA0000000));
+  // Γ¥ù Σ╕ìσ╗║Φ««µÅÉσëìµ╕à∩╝êµö╣Σ╕║σ░╛Θâ¿µ╕à∩╝ë
+  sceGuStart(GU_DIRECT, (void *)(RENDER_LIST | 0xA0000000));
+
   sceGuCopyImage(
     PIXELFORMAT,
     dirty_x, dirty_y,
@@ -935,22 +988,24 @@ void copyFrameBuffer()
     PITCH,
     (void *)DISPLAY_BUFFER
   );
-  sceGuFinish();
-  _sceGeListEnQueue((void *)RENDER_LIST, NULL, -1, NULL);
 
+  sceGuFinish();
+
+  // Γ£ö µö╛µ£ÇσÉÄµ¢┤σ«ëσà¿
   fb_dirty = 0;
 }
+
 
 int sceGeDrawSyncPatched(int syncType)
 {
   int res = _sceGeDrawSync(syncType);
-    if (!framebuf_set) {
-      if (syncType == PSP_GE_LIST_DONE ||
-          syncType == PSP_GE_LIST_DRAWING_DONE) {
-        copyFrameBuffer();
-        rendered_in_sync = 1;
-      }
+  if (!framebuf_set) {
+    if (syncType == PSP_GE_LIST_DONE ||
+        syncType == PSP_GE_LIST_DRAWING_DONE) {
+      copyFrameBuffer();
+      rendered_in_sync = 1;
     }
+  }
   if (framebuf_set > 0)
     framebuf_set--;
   return res;
@@ -964,8 +1019,6 @@ int sceDisplaySetFrameBufPatched(void *topaddr, int bufferwidth, int pixelformat
     fb_pending = 1;
   }
 
-  copyFrameBuffer();
-
   return _sceDisplaySetFrameBuf(
     (void *)VRAM_DRAW_BUFFER_OFFSET,
     PITCH,
@@ -977,12 +1030,12 @@ int sceDisplaySetFrameBufPatched(void *topaddr, int bufferwidth, int pixelformat
 // int draw_thread(SceSize args, void *argp) {
 //   while (1) {
 //     _sceGeDrawSync(0);
-//     
+//     copyFrameBuffer();
 //     sceKernelDelayThread(30 * 1000);
 //   }
 
 //   return 0;
-// }åˆ é™¤èŠ‚æ‹å™¨
+// }
 
 int module_start(SceSize args, void *argp) {
   _sceGeEdramGetAddr = (void *)FindProc("sceGE_Manager", "sceGe_driver", 0xE47E40E4);
@@ -1014,4 +1067,3 @@ int module_start(SceSize args, void *argp) {
 
   return 0;
 }
-
