@@ -1,147 +1,27 @@
 psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600   -c -o main.o main.c
-main.c: In function 'handleControlFlowCommands':
-main.c:430:10: error: stray '\302' in program
-  430 |         <U+00E9><U+00BB><U+02DC><U+00E8><U+00AE><U+00A4>:
-      |                 ^~~~~~~~
-main.c:430:9: error: unknown type name '\U000000e9'
-  430 |         é»˜è®¤:
-      |         ^
-main.c:430:13: error: stray '\302' in program
-  430 |         <U+00E9><U+00BB><U+02DC><U+00E8><U+00AE><U+00A4>:
-      |                                         ^~~~~~~~
-main.c:430:14: error: stray '\302' in program
-  430 |         <U+00E9><U+00BB><U+02DC><U+00E8><U+00AE><U+00A4>:
-      |                                                 ^~~~~~~~
-main.c:430:15: error: expected '=', ',', ';', 'asm' or '__attribute__' before ':' token
-  430 |         é»˜è®¤:
-      |               ^
-main.c: In function 'patchGeList':
-main.c:650:16: error: 'lower' undeclared (first use in this function)
-  650 |   for (int i = lower; i < upper; i++, vertex_addr += vertex_size) {
-      |                ^~~~~
-main.c:650:16: note: each undeclared identifier is reported only once for each function it appears in
-main.c:650:27: error: 'upper' undeclared (first use in this function)
-  650 |   for (int i = lower; i < upper; i++, vertex_addr += vertex_size) {
-      |                           ^~~~~
-main.c:650:54: error: 'vertex_size' undeclared (first use in this function)
-  650 |   for (int i = lower; i < upper; i++, vertex_addr += vertex_size) {
-      |                                                      ^~~~~~~~~~~
-main.c:654:32: error: 'pos_off' undeclared (first use in this function)
-  654 |       u32 addr = vertex_addr + pos_off + j * pos_size;
-      |                                ^~~~~~~
-main.c:683:16: error: 'count' undeclared (first use in this function)
-  683 |   AdvanceVerts(count, vertex_size);
-      |                ^~~~~
-main.c:687:7: error: case label not within a switch statement
-  687 |       case GE_CMD_FRAMEBUFPIXFORMAT:
-      |       ^~~~
-main.c:691:7: error: case label not within a switch statement
-  691 |       case GE_CMD_FRAMEBUFPTR:
-      |       ^~~~
-main.c:692:7: error: case label not within a switch statement
-  692 |       case GE_CMD_FRAMEBUFWIDTH:
-      |       ^~~~
-main.c:763:7: error: case label not within a switch statement
-  763 |       case GE_CMD_ZBUFPTR:
-      |       ^~~~
-main.c:767:7: error: case label not within a switch statement
-  767 |       case GE_CMD_ZBUFWIDTH:
-      |       ^~~~
-main.c:771:7: error: case label not within a switch statement
-  771 |       case GE_CMD_TEXADDR0:
-      |       ^~~~
-main.c:772:7: error: case label not within a switch statement
-  772 |       case GE_CMD_TEXADDR1:
-      |       ^~~~
-main.c:773:7: error: case label not within a switch statement
-  773 |       case GE_CMD_TEXADDR2:
-      |       ^~~~
-main.c:774:7: error: case label not within a switch statement
-  774 |       case GE_CMD_TEXADDR3:
-      |       ^~~~
-main.c:775:7: error: case label not within a switch statement
-  775 |       case GE_CMD_TEXADDR4:
-      |       ^~~~
-main.c:776:7: error: case label not within a switch statement
-  776 |       case GE_CMD_TEXADDR5:
-      |       ^~~~
-main.c:777:7: error: case label not within a switch statement
-  777 |       case GE_CMD_TEXADDR6:
-      |       ^~~~
-main.c:778:7: error: case label not within a switch statement
-  778 |       case GE_CMD_TEXADDR7:
-      |       ^~~~
-main.c:779:7: error: case label not within a switch statement
-  779 |       case GE_CMD_TEXBUFWIDTH0:
-      |       ^~~~
-main.c:780:7: error: case label not within a switch statement
-  780 |       case GE_CMD_TEXBUFWIDTH1:
-      |       ^~~~
-main.c:781:7: error: case label not within a switch statement
-  781 |       case GE_CMD_TEXBUFWIDTH2:
-      |       ^~~~
-main.c:782:7: error: case label not within a switch statement
-  782 |       case GE_CMD_TEXBUFWIDTH3:
-      |       ^~~~
-main.c:783:7: error: case label not within a switch statement
-  783 |       case GE_CMD_TEXBUFWIDTH4:
-      |       ^~~~
-main.c:784:7: error: case label not within a switch statement
-  784 |       case GE_CMD_TEXBUFWIDTH5:
-      |       ^~~~
-main.c:785:7: error: case label not within a switch statement
-  785 |       case GE_CMD_TEXBUFWIDTH6:
-      |       ^~~~
-main.c:786:7: error: case label not within a switch statement
-  786 |       case GE_CMD_TEXBUFWIDTH7:
-      |       ^~~~
-main.c:813:7: error: case label not within a switch statement
-  813 |       case GE_CMD_VIEWPORTXSCALE:
-      |       ^~~~
-main.c:819:7: error: case label not within a switch statement
-  819 |       case GE_CMD_VIEWPORTYSCALE:
-      |       ^~~~
-main.c:825:7: error: case label not within a switch statement
-  825 |       case GE_CMD_VIEWPORTXCENTER:
-      |       ^~~~
-main.c:830:7: error: case label not within a switch statement
-  830 |       case GE_CMD_VIEWPORTYCENTER:
-      |       ^~~~
-main.c:835:7: error: case label not within a switch statement
-  835 |       case GE_CMD_OFFSETX:
-      |       ^~~~
-main.c:839:7: error: case label not within a switch statement
-  839 |       case GE_CMD_OFFSETY:
-      |       ^~~~
-main.c:843:7: error: case label not within a switch statement
-  843 |       case GE_CMD_REGION2:
-      |       ^~~~
-main.c:844:7: error: case label not within a switch statement
-  844 |       case GE_CMD_SCISSOR2:
-      |       ^~~~
-main.c:848:7: error: 'default' label not within a switch statement
-  848 |       default:
-      |       ^~~~~~~
 main.c: In function 'sceGeListUpdateStallAddrPatched':
-main.c:896:9: warning: unused variable 's' [-Wunused-variable]
-  896 |     u32 s = (u32)stall & 0x0FFFFFFF;
+main.c:854:9: warning: unused variable 's' [-Wunused-variable]
+  854 |     u32 s = (u32)stall & 0x0FFFFFFF;
       |         ^
-main.c:895:9: warning: unused variable 'p' [-Wunused-variable]
-  895 |     u32 p = (u32)prev & 0x0FFFFFFF;
+main.c:853:9: warning: unused variable 'p' [-Wunused-variable]
+  853 |     u32 p = (u32)prev & 0x0FFFFFFF;
       |         ^
 main.c: In function 'patchGeList':
-main.c:1027:1: error: expected declaration or statement at end of input
- 1027 | }
+main.c:985:1: error: expected declaration or statement at end of input
+  985 | }
       | ^
-main.c:857:8: warning: variable '_sceGeGetList' set but not used [-Wunused-but-set-variable]
-  857 | int (* _sceGeGetList)(int qid, void *list, int *flag);
+main.c:815:8: warning: variable '_sceGeGetList' set but not used [-Wunused-but-set-variable]
+  815 | int (* _sceGeGetList)(int qid, void *list, int *flag);
       |        ^~~~~~~~~~~~~
+main.c:985:1: error: expected declaration or statement at end of input
+  985 | }
+      | ^
 main.c: At top level:
-main.c:998:5: warning: 'module_start' defined but not used [-Wunused-function]
-  998 | int module_start(SceSize args, void *argp) {
+main.c:956:5: warning: 'module_start' defined but not used [-Wunused-function]
+  956 | int module_start(SceSize args, void *argp) {
       |     ^~~~~~~~~~~~
-main.c:949:5: warning: 'sceGeListSyncPatched' defined but not used [-Wunused-function]
-  949 | int sceGeListSyncPatched(int qid, int syncType) {
+main.c:907:5: warning: 'sceGeListSyncPatched' defined but not used [-Wunused-function]
+  907 | int sceGeListSyncPatched(int qid, int syncType) {
       |     ^~~~~~~~~~~~~~~~~~~~
 main.c:236:12: warning: 'skip' defined but not used [-Wunused-variable]
   236 | static int skip = 0;//ç§»åŠ¨é€Ÿåº¦åŠ é€Ÿï¼Œé™ä½Žè°ƒç”¨apié¢‘çŽ‡
