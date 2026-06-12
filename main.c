@@ -810,6 +810,10 @@ void patchGeList(u32 *list, u32 *stall) {
         break;
     }
 
+    list++;
+  }
+}
+
 void *(* _sceGeEdramGetAddr)(void);
 unsigned int *(* _sceGeEdramGetSize)(void);
 int (* _sceGeGetList)(int qid, void *list, int *flag);
