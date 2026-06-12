@@ -12,6 +12,8 @@
 
 PSP_MODULE_INFO("GePatch", 0x1007, 1, 0);
 
+void copyFrameBuffer(void);
+
 #define DRAW_NATIVE 0xABCDEF00
 
 #define PITCH 960
