@@ -880,10 +880,11 @@ int sceGeListUpdateStallAddrPatched(int qid, void *stall)//å…³é”®å˜�
 }
 
 
-int sceGeListEnQueuePatched(const void *list, void *stall, int cbid, PspGeListArgs *arg) {//æ”¹åŠ¨3
+int sceGeListEnQueuePatched(const void *list, void *stall, int cbid, PspGeListArgs *arg) {//A݃??A1AA"3
+  copyFrameBuffer();
   u32 list_addr = (u32)list & 0x0fffffff;
 
-  // âœ… 1. é¿å…é‡å¤ patch åŒä¸€ä¸ª list
+  // ✅ 1. 避免重复 patch 同一个 list
   if (list_addr != last_list) {
     resetGeState();
 
@@ -916,16 +917,38 @@ int sceGeListSyncPatched(int qid, int syncType) {
 
 
 
+void copyFrameBuffer()
+{
+  if (!fb_dirty)
+    return;
+
+  sceGuStart(0, (void *)(RENDER_LIST | 0xA0000000));
+  sceGuCopyImage(
+    PIXELFORMAT,
+    dirty_x, dirty_y,
+    dirty_w, dirty_h,
+    PITCH,
+    (void *)VRAM_DRAW_BUFFER_OFFSET,
+    dirty_x, dirty_y,
+    PITCH,
+    (void *)DISPLAY_BUFFER
+  );
+  sceGuFinish();
+  _sceGeListEnQueue((void *)RENDER_LIST, NULL, -1, NULL);
+
+  fb_dirty = 0;
+}
+
 int sceGeDrawSyncPatched(int syncType)
 {
   int res = _sceGeDrawSync(syncType);
-  if (!framebuf_set) {
-    if (syncType == PSP_GE_LIST_DONE ||
-        syncType == PSP_GE_LIST_DRAWING_DONE) {
-      
-      rendered_in_sync = 1;
+    if (!framebuf_set) {
+      if (syncType == PSP_GE_LIST_DONE ||
+          syncType == PSP_GE_LIST_DRAWING_DONE) {
+        copyFrameBuffer();
+        rendered_in_sync = 1;
+      }
     }
-  }
   if (framebuf_set > 0)
     framebuf_set--;
   return res;
@@ -938,6 +961,8 @@ int sceDisplaySetFrameBufPatched(void *topaddr, int bufferwidth, int pixelformat
     fb_dirty = 1;
     fb_pending = 1;
   }
+
+  copyFrameBuffer();
 
   return _sceDisplaySetFrameBuf(
     (void *)VRAM_DRAW_BUFFER_OFFSET,
