@@ -1,8 +1,194 @@
 psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600   -c -o main.o main.c
-main.c: In function 'sceDisplaySetFrameBufPatched':
-main.c:909:5: error: 'fb_pending' undeclared (first use in this function); did you mean 'sigpending'?
-  909 |     fb_pending = 1;
-      |     ^~~~~~~~~~
-      |     sigpending
-main.c:909:5: note: each undeclared identifier is reported only once for each function it appears in
+main.c: In function 'handleControlFlowCommands':
+main.c:430:10: error: stray '\342' in program
+  430 |         <U+0398><U+2557><U+00FF><U+03A6><U+00AB><U+00F1>:
+      |                 ^~~~~~~~
+main.c:430:9: error: unknown type name '\U00000398'
+  430 |         Θ╗ÿΦ«ñ:
+      |         ^
+main.c:430:13: error: stray '\302' in program
+  430 |         <U+0398><U+2557><U+00FF><U+03A6><U+00AB><U+00F1>:
+      |                                         ^~~~~~~~
+main.c:430:14: error: expected '=', ',', ';', 'asm' or '__attribute__' before '\U000000f1'
+  430 |         Θ╗ÿΦ«ñ:
+      |              ^
+main.c: In function 'patchGeList':
+main.c:578:20: error: 'base_addr' undeclared (first use in this function)
+  578 |   u8 *vptr = (u8 *)base_addr;
+      |                    ^~~~~~~~~
+main.c:578:20: note: each undeclared identifier is reported only once for each function it appears in
+main.c:586:25: error: 'vertCount' undeclared (first use in this function)
+  586 |     for (int i = 0; i < vertCount; i++) {
+      |                         ^~~~~~~~~
+main.c:588:36: error: 'pos_off' undeclared (first use in this function)
+  588 |       short *vx = (short *)(vptr + pos_off);
+      |                                    ^~~~~~~
+main.c:611:15: error: 'vertex_size' undeclared (first use in this function)
+  611 |       vptr += vertex_size;
+      |               ^~~~~~~~~~~
+main.c:642:16: error: 'count' undeclared (first use in this function)
+  642 |   AdvanceVerts(count, vertex_size);
+      |                ^~~~~
+main.c:652:16: error: 'lower' undeclared (first use in this function)
+  652 |   for (int i = lower; i < upper; i++, vertex_addr += vertex_size) {
+      |                ^~~~~
+main.c:652:27: error: 'upper' undeclared (first use in this function)
+  652 |   for (int i = lower; i < upper; i++, vertex_addr += vertex_size) {
+      |                           ^~~~~
+main.c:689:7: error: case label not within a switch statement
+  689 |       case GE_CMD_FRAMEBUFPIXFORMAT:
+      |       ^~~~
+main.c:690:18: error: 'cmd' undeclared (first use in this function)
+  690 |         *list = (cmd << 24) | PIXELFORMAT;
+      |                  ^~~
+main.c:691:9: error: break statement not within loop or switch
+  691 |         break;
+      |         ^~~~~
+main.c:693:7: error: case label not within a switch statement
+  693 |       case GE_CMD_FRAMEBUFPTR:
+      |       ^~~~
+main.c:694:7: error: case label not within a switch statement
+  694 |       case GE_CMD_FRAMEBUFWIDTH:
+      |       ^~~~
+main.c:698:31: error: 'op' undeclared (first use in this function); did you mean 'pop'?
+  698 |           state.framebufptr = op;
+      |                               ^~
+      |                               pop
+main.c:762:9: error: break statement not within loop or switch
+  762 |         break;
+      |         ^~~~~
+main.c:765:7: error: case label not within a switch statement
+  765 |       case GE_CMD_ZBUFPTR:
+      |       ^~~~
+main.c:767:9: error: break statement not within loop or switch
+  767 |         break;
+      |         ^~~~~
+main.c:769:7: error: case label not within a switch statement
+  769 |       case GE_CMD_ZBUFWIDTH:
+      |       ^~~~
+main.c:771:9: error: break statement not within loop or switch
+  771 |         break;
+      |         ^~~~~
+main.c:773:7: error: case label not within a switch statement
+  773 |       case GE_CMD_TEXADDR0:
+      |       ^~~~
+main.c:774:7: error: case label not within a switch statement
+  774 |       case GE_CMD_TEXADDR1:
+      |       ^~~~
+main.c:775:7: error: case label not within a switch statement
+  775 |       case GE_CMD_TEXADDR2:
+      |       ^~~~
+main.c:776:7: error: case label not within a switch statement
+  776 |       case GE_CMD_TEXADDR3:
+      |       ^~~~
+main.c:777:7: error: case label not within a switch statement
+  777 |       case GE_CMD_TEXADDR4:
+      |       ^~~~
+main.c:778:7: error: case label not within a switch statement
+  778 |       case GE_CMD_TEXADDR5:
+      |       ^~~~
+main.c:779:7: error: case label not within a switch statement
+  779 |       case GE_CMD_TEXADDR6:
+      |       ^~~~
+main.c:780:7: error: case label not within a switch statement
+  780 |       case GE_CMD_TEXADDR7:
+      |       ^~~~
+main.c:781:7: error: case label not within a switch statement
+  781 |       case GE_CMD_TEXBUFWIDTH0:
+      |       ^~~~
+main.c:782:7: error: case label not within a switch statement
+  782 |       case GE_CMD_TEXBUFWIDTH1:
+      |       ^~~~
+main.c:783:7: error: case label not within a switch statement
+  783 |       case GE_CMD_TEXBUFWIDTH2:
+      |       ^~~~
+main.c:784:7: error: case label not within a switch statement
+  784 |       case GE_CMD_TEXBUFWIDTH3:
+      |       ^~~~
+main.c:785:7: error: case label not within a switch statement
+  785 |       case GE_CMD_TEXBUFWIDTH4:
+      |       ^~~~
+main.c:786:7: error: case label not within a switch statement
+  786 |       case GE_CMD_TEXBUFWIDTH5:
+      |       ^~~~
+main.c:787:7: error: case label not within a switch statement
+  787 |       case GE_CMD_TEXBUFWIDTH6:
+      |       ^~~~
+main.c:788:7: error: case label not within a switch statement
+  788 |       case GE_CMD_TEXBUFWIDTH7:
+      |       ^~~~
+main.c:812:9: error: break statement not within loop or switch
+  812 |         break;
+      |         ^~~~~
+main.c:815:7: error: case label not within a switch statement
+  815 |       case GE_CMD_VIEWPORTXSCALE:
+      |       ^~~~
+main.c:816:15: error: 'data' undeclared (first use in this function)
+  816 |         t.i = data << 8;
+      |               ^~~~
+main.c:819:9: error: break statement not within loop or switch
+  819 |         break;
+      |         ^~~~~
+main.c:821:7: error: case label not within a switch statement
+  821 |       case GE_CMD_VIEWPORTYSCALE:
+      |       ^~~~
+main.c:825:9: error: break statement not within loop or switch
+  825 |         break;
+      |         ^~~~~
+main.c:827:7: error: case label not within a switch statement
+  827 |       case GE_CMD_VIEWPORTXCENTER:
+      |       ^~~~
+main.c:830:9: error: break statement not within loop or switch
+  830 |         break;
+      |         ^~~~~
+main.c:832:7: error: case label not within a switch statement
+  832 |       case GE_CMD_VIEWPORTYCENTER:
+      |       ^~~~
+main.c:835:9: error: break statement not within loop or switch
+  835 |         break;
+      |         ^~~~~
+main.c:837:7: error: case label not within a switch statement
+  837 |       case GE_CMD_OFFSETX:
+      |       ^~~~
+main.c:839:9: error: break statement not within loop or switch
+  839 |         break;
+      |         ^~~~~
+main.c:841:7: error: case label not within a switch statement
+  841 |       case GE_CMD_OFFSETY:
+      |       ^~~~
+main.c:843:9: error: break statement not within loop or switch
+  843 |         break;
+      |         ^~~~~
+main.c:845:7: error: case label not within a switch statement
+  845 |       case GE_CMD_REGION2:
+      |       ^~~~
+main.c:846:7: error: case label not within a switch statement
+  846 |       case GE_CMD_SCISSOR2:
+      |       ^~~~
+main.c:848:9: error: break statement not within loop or switch
+  848 |         break;
+      |         ^~~~~
+main.c:850:7: error: 'default' label not within a switch statement
+  850 |       default:
+      |       ^~~~~~~
+main.c:854:9: error: break statement not within loop or switch
+  854 |         break;
+      |         ^~~~~
+main.c: In function 'sceGeListUpdateStallAddrPatched':
+main.c:898:9: warning: unused variable 's' [-Wunused-variable]
+  898 |     u32 s = (u32)stall & 0x0FFFFFFF;
+      |         ^
+main.c:897:9: warning: unused variable 'p' [-Wunused-variable]
+  897 |     u32 p = (u32)prev & 0x0FFFFFFF;
+      |         ^
+main.c: At top level:
+main.c:236:12: warning: 'skip' defined but not used [-Wunused-variable]
+  236 | static int skip = 0;//τº╗σè¿ΘÇƒσ║ªσèáΘÇƒ∩╝îΘÖìΣ╜ÄΦ░âτö¿apiΘóæτÄç
+      |            ^~~~
+main.c:234:12: warning: 'fb_copy_lock' defined but not used [-Wunused-variable]
+  234 | static int fb_copy_lock = 0;//ΦèéµïìσÖ¿
+      |            ^~~~~~~~~~~~
+main.c:233:12: warning: 'fb_last_vsync' defined but not used [-Wunused-variable]
+  233 | static int fb_last_vsync = 0;
+      |            ^~~~~~~~~~~~~
 make: *** [<builtin>: main.o] Error 1
