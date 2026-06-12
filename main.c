@@ -1,4 +1,4 @@
-﻿#include <pspsdk.h>
+#include <pspsdk.h>
 #include <pspkernel.h>
 #include <pspge.h>
 #include <pspgu.h>
@@ -566,12 +566,10 @@ void patchGeList(u32 *list, u32 *stall) {
   }
 
   // =========================================================
-  // ðŸš€ 5. æ­£å¸¸æŽ¨è¿›ï¼ˆä¸å†åšé‡è®¡ç®—ï¼‰
+  // 🚀 5. 正常推进（不再做重计算）
   // =========================================================
-  AdvanceVerts(count, vertex_size);
-  break;
-}
-       
+  // (We actually DO want to calculate vertices now!)
+
   int pos = (state.vertex_type & GE_VTYPE_POS_MASK) >> GE_VTYPE_POS_SHIFT;
   int pos_size = possize[pos] / 3;
 
