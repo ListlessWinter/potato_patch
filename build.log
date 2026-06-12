@@ -1,28 +1,22 @@
 psp-gcc -I. -I/usr/local/pspdev/psp/include -I/usr/local/pspdev/psp/sdk/include -O2 -G0 -Wall -fno-pic -D_PSP_FW_VERSION=600   -c -o main.o main.c
 main.c: In function 'sceGeListUpdateStallAddrPatched':
-main.c:854:9: warning: unused variable 's' [-Wunused-variable]
-  854 |     u32 s = (u32)stall & 0x0FFFFFFF;
+main.c:858:9: warning: unused variable 's' [-Wunused-variable]
+  858 |     u32 s = (u32)stall & 0x0FFFFFFF;
       |         ^
-main.c:853:9: warning: unused variable 'p' [-Wunused-variable]
-  853 |     u32 p = (u32)prev & 0x0FFFFFFF;
+main.c:857:9: warning: unused variable 'p' [-Wunused-variable]
+  857 |     u32 p = (u32)prev & 0x0FFFFFFF;
       |         ^
-main.c: In function 'patchGeList':
-main.c:985:1: error: expected declaration or statement at end of input
-  985 | }
-      | ^
-main.c:815:8: warning: variable '_sceGeGetList' set but not used [-Wunused-but-set-variable]
-  815 | int (* _sceGeGetList)(int qid, void *list, int *flag);
-      |        ^~~~~~~~~~~~~
-main.c:985:1: error: expected declaration or statement at end of input
-  985 | }
-      | ^
+main.c: In function 'sceGeListEnQueuePatched':
+main.c:884:3: error: implicit declaration of function 'copyFrameBuffer' [-Wimplicit-function-declaration]
+  884 |   copyFrameBuffer();
+      |   ^~~~~~~~~~~~~~~
 main.c: At top level:
-main.c:956:5: warning: 'module_start' defined but not used [-Wunused-function]
-  956 | int module_start(SceSize args, void *argp) {
-      |     ^~~~~~~~~~~~
-main.c:907:5: warning: 'sceGeListSyncPatched' defined but not used [-Wunused-function]
-  907 | int sceGeListSyncPatched(int qid, int syncType) {
-      |     ^~~~~~~~~~~~~~~~~~~~
+main.c:920:6: warning: conflicting types for 'copyFrameBuffer'; have 'void(void)'
+  920 | void copyFrameBuffer()
+      |      ^~~~~~~~~~~~~~~
+main.c:884:3: note: previous implicit declaration of 'copyFrameBuffer' with type 'void(void)'
+  884 |   copyFrameBuffer();
+      |   ^~~~~~~~~~~~~~~
 main.c:236:12: warning: 'skip' defined but not used [-Wunused-variable]
   236 | static int skip = 0;//ç§»åŠ¨é€Ÿåº¦åŠ é€Ÿï¼Œé™ä½Žè°ƒç”¨apié¢‘çŽ‡
       |            ^~~~
