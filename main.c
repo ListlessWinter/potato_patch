@@ -1,4 +1,6 @@
 #include <pspsdk.h>
+
+void copyFrameBuffer(void);
 #include <pspkernel.h>
 #include <pspge.h>
 #include <pspgu.h>
@@ -757,6 +759,10 @@ void patchGeList(u32 *list, u32 *stall) {
           return;
         break;
     }
+
+    list++;
+  }
+}
 
 void *(* _sceGeEdramGetAddr)(void);
 unsigned int *(* _sceGeEdramGetSize)(void);
